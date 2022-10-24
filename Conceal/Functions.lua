@@ -1,6 +1,8 @@
 local addonName, addon = ...;
 local P = "player";
 
+
+-- Local Functions
 local function isHealthOutsideThreshold()
     local threshold = ConcealDB["health"];
     if threshold then
@@ -27,6 +29,23 @@ local function isPowerOutsideThreshold()
     end
 end
 
+local function isMouseOverActionBar()
+    if ConcealDB["ActionBar1"] then
+        for i=1,12 do 
+            if _G["ActionButton" ..i]:IsMouseOver() then return true; end
+        end
+    end
+    if ConcealDB["ActionBar2"] then if actionBar2:IsMouseOver() then return true; end end
+    if ConcealDB["ActionBar3"] then if actionBar3:IsMouseOver() then return true; end end
+    if ConcealDB["ActionBar4"] then if actionBar4:IsMouseOver() then return true; end end
+    if ConcealDB["ActionBar5"] then if actionBar5:IsMouseOver() then return true; end end
+    if ConcealDB["ActionBar6"] then if actionBar6:IsMouseOver() then return true; end end
+    if ConcealDB["ActionBar7"] then if actionBar7:IsMouseOver() then return true; end end
+    if ConcealDB["ActionBar8"] then if actionBar8:IsMouseOver() then return true; end end
+    return false
+end
+
+-- Player Frame Functions
 local function isMouseOverPlayerFrame()
     local mouseover = ConcealDB["mouseover"] and true or false;
     if mouseover and PlayerFrame:IsMouseOver() then
@@ -71,72 +90,103 @@ local function shouldShowPlayerFrame()
     -- show player frame if it is moused over
     if isMouseOverPlayerFrame() then return true; end
 
+    -- show if action bars are moused over
+    if isMouseOverActionBar() then return true; end
+
     -- otherwise, hide the player frame
     return false;
 end
 
+
+-- Action Bar Functions
+
+
+local function showAllActionBars()
+
+    actionBar2:SetAlpha(1);
+    actionBar3:SetAlpha(1);
+    actionBar4:SetAlpha(1);
+    actionBar5:SetAlpha(1);
+    actionBar6:SetAlpha(1);
+    actionBar7:SetAlpha(1);
+    actionBar8:SetAlpha(1);
+    for i=1,12 do
+        _G["ActionButton" ..i]:SetAlpha(1)
+    end
+end
+
+local function hideAllActionBars()
+    local frameAlpha = ConcealDB["alpha"]
+    if frameAlpha > 1 then
+        frameAlpha = frameAlpha / 100
+    end
+    if ConcealDB["ActionBar2"] then actionBar2:SetAlpha(frameAlpha); else actionBar2:SetAlpha(1); end
+    if ConcealDB["ActionBar3"] then actionBar3:SetAlpha(frameAlpha); else actionBar3:SetAlpha(1); end
+    if ConcealDB["ActionBar4"] then actionBar4:SetAlpha(frameAlpha); else actionBar4:SetAlpha(1); end
+    if ConcealDB["ActionBar5"] then actionBar5:SetAlpha(frameAlpha); else actionBar5:SetAlpha(1); end
+    if ConcealDB["ActionBar6"] then actionBar6:SetAlpha(frameAlpha); else actionBar6:SetAlpha(1); end
+    if ConcealDB["ActionBar7"] then actionBar7:SetAlpha(frameAlpha); else actionBar7:SetAlpha(1); end
+    if ConcealDB["ActionBar8"] then actionBar8:SetAlpha(frameAlpha); else actionBar8:SetAlpha(1); end
+    if ConcealDB["ActionBar1"] then
+        for i=1,12 do
+            _G["ActionButton" ..i]:SetAlpha(frameAlpha)
+        end
+    else 
+        for i=1,12 do
+            _G["ActionButton" ..i]:SetAlpha(1)
+        end
+    end
+    
+end
+
+local function shouldShowActionBars()
+    local result = false
+    -- show player frame if player has a target
+    if UnitExists("target") then result = true; end
+
+    -- show player frame if player is in combat
+    if UnitAffectingCombat(P) then result = true; end
+
+    -- show player frame if player health is < 100%
+    if isHealthOutsideThreshold() then result = true; end
+
+    -- show if player frame is moused over
+    if isMouseOverPlayerFrame() then result = true; end
+
+    -- show if action bars are moused over
+    if isMouseOverActionBar() then result = true; end
+
+    return result;
+end
+
+
+-- Global Addon Functions
 addon.togglePlayerFrame = function()
     if shouldShowPlayerFrame() then
         showPlayerFrame();
     else
         hidePlayerFrame();
     end
-    local mouseover = ConcealDB["mouseover"] and true or false;
-    if mouseover then
-        C_Timer.NewTicker(0.10, function()
-            if shouldShowPlayerFrame() then
-                showPlayerFrame();
-            else
-                hidePlayerFrame();
-            end
-        end)
-    end
+    C_Timer.NewTicker(0.10, function()
+        if shouldShowPlayerFrame() then
+            showPlayerFrame();
+        else
+            hidePlayerFrame();
+        end
+    end)
 end
 
-addon.setupOptionFrame = function()
-    local category = Settings.RegisterVerticalLayoutCategory("Conceal")
-    do
-        local variable1 = "interactive"
-        local name1 = "Interactive"
-        local tooltip1 = "Toggle player frame interactivity when hidden."
-        local defaultValue1 = true
-    
-        local interactive = Settings.RegisterProxySetting(category, variable1, ConcealDB, type(defaultValue1), name1, defaultValue1)
-        Settings.CreateCheckBox(category, interactive, tooltip1)
+addon.toggleActionBars = function()
+    if shouldShowActionBars() then
+        showAllActionBars();
+    else
+        hideAllActionBars();
     end
-    do
-        local variable2 = "mouseover"
-        local name2 = "Mouse Over"
-        local tooltip2 = "Show the player frame on mouseover."
-        local defaultValue2 = true
-        local mouseover = Settings.RegisterProxySetting(category, variable2, ConcealDB, type(defaultValue2), name2, defaultValue2)
-        Settings.CreateCheckBox(category, mouseover, tooltip2)
-    end
-    do
-        local variable3 = "alpha"
-        local name3 = "Alpha"
-        local tooltip3 = "The frame alpha when not selected."
-        local defaultValue3 = 30
-        local minValue3 = 0
-        local maxValue3 = 100
-        local step3 = 5
-        local alpha = Settings.RegisterProxySetting(category, variable3, ConcealDB, type(defaultValue3), name3, defaultValue3)
-        local options = Settings.CreateSliderOptions(minValue3, maxValue3, step3)
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-        Settings.CreateSlider(category, alpha, options, tooltip3)
-    end
-    do
-        local variable4 = "health"
-        local name4 = "Health Trashold"
-        local tooltip4 = "The player health % below which the player frame will be shown."
-        local defaultValue4 = 100
-        local minValue4 = 10
-        local maxValue4 = 100
-        local step4 = 5
-        local health = Settings.RegisterProxySetting(category, variable4, ConcealDB, type(defaultValue4), name4, defaultValue4)
-        local healthOptions = Settings.CreateSliderOptions(minValue4, maxValue4, step4)
-        healthOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-        Settings.CreateSlider(category, health, healthOptions, tooltip4)
-    end
-    Settings.RegisterAddOnCategory(category)
+    C_Timer.NewTicker(0.10, function()
+        if shouldShowActionBars() then
+            showAllActionBars();
+        else
+            hideAllActionBars();
+        end
+    end)
 end

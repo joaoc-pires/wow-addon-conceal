@@ -1,6 +1,6 @@
 local addonName, addon = ...;
 
-local mainFrame = CreateFrame("FRAME", "pfshMain");
+local mainFrame = CreateFrame("FRAME", "ConcealMain");
 mainFrame:RegisterEvent("ADDON_LOADED");
 mainFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 mainFrame:RegisterEvent("PLAYER_LEAVING_WORLD");
@@ -20,8 +20,9 @@ mainFrame:SetScript("OnEvent", function(self, event, arg1)
         if not ConcealDB then
             ConcealDB = addon.defaults["options"];
         end
-        addon.setupOptionFrame()
+        addon.setupOptionFrame();
     end
 
     addon.togglePlayerFrame();
+    addon.toggleActionBars();
 end);
