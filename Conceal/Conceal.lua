@@ -34,27 +34,31 @@ local options = {
                 name = "General",
                 type = "header",              
             },
-            interactive = {
-                order = 1,
-                name = "Interactive",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = "normal",
-                disabled = false,
-            },
-            mouseover = {
-                order = 2,
-                name = "Mouse Over",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = "normal",
-                disabled = false,
-            },
+            -- interactive = {
+            --     order = 1,
+            --     name = "Interactive",
+            --     desc = "Makes it possible to click the player frame even if mouse over is disabled",
+            --     type = "toggle",
+            --     get = "GetStatus",
+            --     set = "SetStatus",
+            --     width = "normal",
+            --     disabled = false,
+            -- },
+            -- mouseover = {
+            --     order = 2,
+            --     name = "Mouse Over",
+            --     desc = "If deselected hovering over an element with the mouse will not show the element. The tooltil will still show when hovering an element.",
+            --     type = "toggle",
+            --     get = "GetStatus",
+            --     set = "SetStatus",
+            --     width = "normal",
+            --     disabled = false,
+            -- },
             alpha = {
-                order = 3,
-                name = "Alpha",
+                order = 3.1,
+                name = "Opacity",
+                desc = "Opacity of the elements when concealed.",
+                width = 2,
                 type = "range",
                 get = "GetSlider",
                 set = "SetSlider",
@@ -64,8 +68,10 @@ local options = {
                 disabled = false,
             },
             health = {
-                order = 3,
+                order = 3.2,
                 name = "Health Treshold",
+                desc = "The treshold which will trigger the elements to show if the Health % is bellow.",
+                width = 2,
                 type = "range",
                 get = "GetSlider",
                 set = "SetSlider",
@@ -83,6 +89,7 @@ local options = {
             actionBar1 = {
                 order = 5,
                 name = "Action Bar 1",
+                desc = "Conceal Action Bar 1",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -92,6 +99,7 @@ local options = {
             actionBar2 = {
                 order = 6,
                 name = "Action Bar 2",
+                desc = "Conceal Action Bar 2",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -101,6 +109,7 @@ local options = {
             actionBar3 = {
                 order = 7,
                 name = "Action Bar 3",
+                desc = "Conceal Action Bar 3",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -110,6 +119,7 @@ local options = {
             actionBar4 = {
                 order = 8,
                 name = "Action Bar 4",
+                desc = "Conceal Action Bar 4",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -119,6 +129,7 @@ local options = {
             actionBar5 = {
                 order = 9,
                 name = "Action Bar 5",
+                desc = "Conceal Action Bar 5",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -128,6 +139,7 @@ local options = {
             actionBar6 = {
                 order = 10,
                 name = "Action Bar 6",
+                desc = "Conceal Action Bar 6",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -137,6 +149,7 @@ local options = {
             actionBar7 = {
                 order = 11,
                 name = "Action Bar 7",
+                desc = "Conceal Action Bar 7",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -146,6 +159,7 @@ local options = {
             actionBar8 = {
                 order = 12,
                 name = "Action Bar 8",
+                desc = "Conceal Action Bar 8",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -161,6 +175,7 @@ local options = {
             petActionBar = {
                 order = 14,
                 name = "Pet Action Bar",
+                desc = "Conceal Pet Action Bar",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -170,6 +185,7 @@ local options = {
             stanceBar = {
                 order = 15,
                 name = "Stance Bar",
+                desc = "Conceal Stance Bar",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -227,15 +243,19 @@ function Conceal:isHealthOutsideThreshold()
 end
 
 function Conceal:isMouseOverPlayerFrame()
-    local mouseover = self.db.profile["mouseover"] and true or false;
-    if mouseover and PlayerFrame:IsMouseOver() then
-        return true;
-    else
-        return false;
-    end
+    -- local mouseover = self.db.profile["mouseover"] and true or false;
+    -- if mouseover and PlayerFrame:IsMouseOver() then
+    --     return true;
+    -- else
+    --     return false;
+    -- end
+
+    return PlayerFrame:IsMouseOver()
 end
 
 function Conceal:isMouseOverActionBar()
+    -- local mouseover = self.db.profile["mouseover"] and true or false;
+    -- if not mouseover then return false end
     if self.db.profile["actionBar1"] then
         for i=1,12 do 
             if _G["ActionButton" ..i]:IsMouseOver() then return true; end
@@ -295,9 +315,10 @@ end
 
 function Conceal:showPlayerFrame()
     PlayerFrame:SetAlpha(1);
-    if not PlayerFrame:IsMouseEnabled() then
-        PlayerFrame:EnableMouse(true);
-    end
+    PlayerFrame:EnableMouse(true);
+    -- if not PlayerFrame:IsMouseEnabled() then
+    --     PlayerFrame:EnableMouse(true);
+    -- end
 end
 
 function Conceal:showAllActionBars()
@@ -316,10 +337,10 @@ function Conceal:showAllActionBars()
 end
 
 function Conceal:hidePlayerFrame()
-    local interactive = self.db.profile["interactive"] and true or false;
-    if not InCombatLockdown() then
-        PlayerFrame:EnableMouse(interactive);
-    end
+    -- local interactive = self.db.profile["interactive"] and true or false;
+    -- if not InCombatLockdown() then
+    --     PlayerFrame:EnableMouse(interactive);
+    -- end
     local frameAlpha = self.db.profile["alpha"] 
     if frameAlpha > 1 then
         frameAlpha = frameAlpha / 100
