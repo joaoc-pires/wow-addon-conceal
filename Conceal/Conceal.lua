@@ -17,7 +17,9 @@ local defaults = {
         actionBar5 = true,
         actionBar6 = true,
         actionBar7 = true,
-        actionBar8 = true
+        actionBar8 = true,
+        petActionBar = true,
+        stanceBar = true
     }
 }
 
@@ -149,7 +151,31 @@ local options = {
                 set = "SetStatus",
                 width = "full",
                 disabled = false,
-            }
+            },
+            -- Other Bar Options
+            ActionBarHeader = {
+                order = 13,
+                name = "Other Bars",
+                type = "header",              
+            },
+            petActionBar = {
+                order = 14,
+                name = "Pet Action Bar",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = "full",
+                disabled = false,
+            },
+            stanceBar = {
+                order = 15,
+                name = "Stance Bar",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = "full",
+                disabled = false,
+            },
     }
 }
 
@@ -160,7 +186,6 @@ ActionBar5 = MultiBarLeft
 ActionBar6 = MultiBar5
 ActionBar7 = MultiBar6
 ActionBar8 = MultiBar7
-
 
 function Conceal:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("ConcealDB", defaults, true) 
@@ -223,6 +248,8 @@ function Conceal:isMouseOverActionBar()
     if self.db.profile["actionBar6"] then if ActionBar6:IsMouseOver() then return true; end end
     if self.db.profile["actionBar7"] then if ActionBar7:IsMouseOver() then return true; end end
     if self.db.profile["actionBar8"] then if ActionBar8:IsMouseOver() then return true; end end
+    if self.db.profile["petActionBar"] then if PetActionBar:IsMouseOver() then return true; end end
+    if self.db.profile["stanceBar"] then if StanceBar:IsMouseOver() then return true; end end
     return false
 end
 
@@ -274,7 +301,9 @@ function Conceal:showPlayerFrame()
 end
 
 function Conceal:showAllActionBars()
-
+    for i=1,12 do
+        _G["ActionButton" ..i]:SetAlpha(1)
+    end
     ActionBar2:SetAlpha(1);
     ActionBar3:SetAlpha(1);
     ActionBar4:SetAlpha(1);
@@ -282,9 +311,8 @@ function Conceal:showAllActionBars()
     ActionBar6:SetAlpha(1);
     ActionBar7:SetAlpha(1);
     ActionBar8:SetAlpha(1);
-    for i=1,12 do
-        _G["ActionButton" ..i]:SetAlpha(1)
-    end
+    PetActionBar:SetAlpha(1);
+    StanceBar:SetAlpha(1);
 end
 
 function Conceal:hidePlayerFrame()
@@ -304,13 +332,6 @@ function Conceal:hideAllActionBars()
     if frameAlpha > 1 then
         frameAlpha = frameAlpha / 100
     end
-    if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(frameAlpha); else ActionBar2:SetAlpha(1); end
-    if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(frameAlpha); else ActionBar3:SetAlpha(1); end
-    if self.db.profile["actionBar4"] then ActionBar4:SetAlpha(frameAlpha); else ActionBar4:SetAlpha(1); end
-    if self.db.profile["actionBar5"] then ActionBar5:SetAlpha(frameAlpha); else ActionBar5:SetAlpha(1); end
-    if self.db.profile["actionBar6"] then ActionBar6:SetAlpha(frameAlpha); else ActionBar6:SetAlpha(1); end
-    if self.db.profile["actionBar7"] then ActionBar7:SetAlpha(frameAlpha); else ActionBar7:SetAlpha(1); end
-    if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(frameAlpha); else ActionBar8:SetAlpha(1); end
     if self.db.profile["actionBar1"] then
         for i=1,12 do
             _G["ActionButton" ..i]:SetAlpha(frameAlpha)
@@ -320,6 +341,15 @@ function Conceal:hideAllActionBars()
             _G["ActionButton" ..i]:SetAlpha(1)
         end
     end
+    if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(frameAlpha); else ActionBar2:SetAlpha(1); end
+    if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(frameAlpha); else ActionBar3:SetAlpha(1); end
+    if self.db.profile["actionBar4"] then ActionBar4:SetAlpha(frameAlpha); else ActionBar4:SetAlpha(1); end
+    if self.db.profile["actionBar5"] then ActionBar5:SetAlpha(frameAlpha); else ActionBar5:SetAlpha(1); end
+    if self.db.profile["actionBar6"] then ActionBar6:SetAlpha(frameAlpha); else ActionBar6:SetAlpha(1); end
+    if self.db.profile["actionBar7"] then ActionBar7:SetAlpha(frameAlpha); else ActionBar7:SetAlpha(1); end
+    if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(frameAlpha); else ActionBar8:SetAlpha(1); end
+    if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(frameAlpha); else PetActionBar:SetAlpha(1); end
+    if self.db.profile["stanceBar"] then StanceBar:SetAlpha(frameAlpha); else StanceBar:SetAlpha(1); end
     
 end
 
