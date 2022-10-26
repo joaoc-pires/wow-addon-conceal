@@ -15,11 +15,11 @@ local defaults = {
         actionBar3 = true,
         actionBar4 = true,
         actionBar5 = true,
-        actionBar6 = true,
-        actionBar7 = true,
-        actionBar8 = true,
-        petActionBar = true,
-        stanceBar = true
+        -- actionBar6 = true,
+        -- actionBar7 = true,
+        -- actionBar8 = true,
+        --petActionBar = true,
+        -- stanceBar = true
     }
 }
 
@@ -32,7 +32,7 @@ local options = {
             GeneralHeader = {
                 order = 0,
                 name = "General",
-                type = "header",              
+                type = "header",
             },
             -- interactive = {
             --     order = 1,
@@ -63,7 +63,7 @@ local options = {
                 get = "GetSlider",
                 set = "SetSlider",
                 min = 0,
-                max = 100,   
+                max = 100,
                 step = 5,
                 disabled = false,
             },
@@ -76,7 +76,7 @@ local options = {
                 get = "GetSlider",
                 set = "SetSlider",
                 min = 0,
-                max = 100,   
+                max = 100,
                 step = 5,
                 disabled = false,
             },
@@ -84,7 +84,7 @@ local options = {
             ActionBarHeader = {
                 order = 4,
                 name = "Action Bars",
-                type = "header",              
+                type = "header",
             },
             actionBar1 = {
                 order = 5,
@@ -136,7 +136,7 @@ local options = {
                 width = "full",
                 disabled = false,
             },
-            actionBar6 = {
+--[[             actionBar6 = {
                 order = 10,
                 name = "Action Bar 6",
                 desc = "Conceal Action Bar 6",
@@ -165,52 +165,53 @@ local options = {
                 set = "SetStatus",
                 width = "full",
                 disabled = false,
-            },
+            }, ]]
             -- Other Bar Options
             ActionBarHeader = {
                 order = 13,
                 name = "Other Bars",
-                type = "header",              
+                type = "header",
             },
-            petActionBar = {
-                order = 14,
-                name = "Pet Action Bar",
-                desc = "Conceal Pet Action Bar",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = "full",
-                disabled = false,
-            },
-            stanceBar = {
-                order = 15,
-                name = "Stance Bar",
-                desc = "Conceal Stance Bar",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = "full",
-                disabled = false,
-            },
+            -- petActionBar = {
+            --     order = 14,
+            --     name = "Pet Action Bar",
+            --     desc = "Conceal Pet Action Bar",
+            --     type = "toggle",
+            --     get = "GetStatus",
+            --     set = "SetStatus",
+            --     width = "full",
+            --     disabled = false,
+            -- },
+            -- stanceBar = {
+            --     order = 15,
+            --     name = "Stance Bar",
+            --     desc = "Conceal Stance Bar",
+            --     type = "toggle",
+            --     get = "GetStatus",
+            --     set = "SetStatus",
+            --     width = "full",
+            --     disabled = false,
+            -- },
     }
 }
 
+ActionBar1 = MainMenuBar
 ActionBar2 = MultiBarBottomLeft
 ActionBar3 = MultiBarBottomRight
-ActionBar4 = MultiBarRight 
+ActionBar4 = MultiBarRight
 ActionBar5 = MultiBarLeft
-ActionBar6 = MultiBar5
-ActionBar7 = MultiBar6
-ActionBar8 = MultiBar7
+-- ActionBar6 = MultiBar5
+-- ActionBar7 = MultiBar6
+-- ActionBar8 = MultiBar7
 
 function Conceal:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("ConcealDB", defaults, true) 
+    self.db = LibStub("AceDB-3.0"):New("ConcealDB", defaults, true)
     self.db.RegisterCallback(self, "OnProfileChanged", "ProfileHandler")
     self.db.RegisterCallback(self, "OnProfileCopied", "ProfileHandler")
     self.db.RegisterCallback(self, "OnProfileReset", "ProfileHandler")
-    AC:RegisterOptionsTable("Conceal_options", options) 
-    self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")  
-    
+    AC:RegisterOptionsTable("Conceal_options", options)
+    self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")
+
     Conceal:RegisterEvent("ADDON_LOADED", "refreshGUI");
     Conceal:RegisterEvent("PLAYER_ENTERING_WORLD", "refreshGUI");
     Conceal:RegisterEvent("PLAYER_LEAVING_WORLD", "refreshGUI");
@@ -219,7 +220,7 @@ function Conceal:OnInitialize()
     Conceal:RegisterEvent("PLAYER_REGEN_ENABLED", "refreshGUI");
     Conceal:RegisterEvent("PLAYER_REGEN_DISABLED", "refreshGUI");
     Conceal:RegisterEvent("PLAYER_TARGET_CHANGED", "refreshGUI");
-    
+
     Conceal:HideGcdFlash()
 end
 
@@ -256,20 +257,21 @@ end
 function Conceal:isMouseOverActionBar()
     -- local mouseover = self.db.profile["mouseover"] and true or false;
     -- if not mouseover then return false end
-    if self.db.profile["actionBar1"] then
-        for i=1,12 do 
-            if _G["ActionButton" ..i]:IsMouseOver() then return true; end
-        end
-    end
+    -- if self.db.profile["actionBar1"] then
+    --     for i=1,12 do
+    --         if _G["ActionButton" ..i]:IsMouseOver() then return true; end
+    --     end
+    -- end
+    if self.db.profile["actionBar1"] then if ActionBar1:IsMouseOver() then return true; end end
     if self.db.profile["actionBar2"] then if ActionBar2:IsMouseOver() then return true; end end
     if self.db.profile["actionBar3"] then if ActionBar3:IsMouseOver() then return true; end end
     if self.db.profile["actionBar4"] then if ActionBar4:IsMouseOver() then return true; end end
     if self.db.profile["actionBar5"] then if ActionBar5:IsMouseOver() then return true; end end
-    if self.db.profile["actionBar6"] then if ActionBar6:IsMouseOver() then return true; end end
-    if self.db.profile["actionBar7"] then if ActionBar7:IsMouseOver() then return true; end end
-    if self.db.profile["actionBar8"] then if ActionBar8:IsMouseOver() then return true; end end
-    if self.db.profile["petActionBar"] then if PetActionBar:IsMouseOver() then return true; end end
-    if self.db.profile["stanceBar"] then if StanceBar:IsMouseOver() then return true; end end
+    -- if self.db.profile["actionBar6"] then if ActionBar6:IsMouseOver() then return true; end end
+    -- if self.db.profile["actionBar7"] then if ActionBar7:IsMouseOver() then return true; end end
+    -- if self.db.profile["actionBar8"] then if ActionBar8:IsMouseOver() then return true; end end
+    -- if self.db.profile["petActionBar"] then if PetActionBar:IsMouseOver() then return true; end end
+    -- if self.db.profile["stanceBar"] then if StanceBar:IsMouseOver() then return true; end end
     return false
 end
 
@@ -293,6 +295,16 @@ function Conceal:shouldShowPlayerFrame()
     return false;
 end
 
+function Conceal:IsAnyUIPanelOpen()
+    local       leftFrame = GetUIPanel("left")
+    local     centerFrame = GetUIPanel("center")
+    local      rightFrame = GetUIPanel("right")
+    local doublewideFrame = GetUIPanel("doublewide")
+    local fullScreenFrame = GetUIPanel("fullscreen")
+    local found = leftFrame or centerFrame or rightFrame or doublewideFrame or fullScreenFrame
+    return found ~= nil
+end
+
 function Conceal:shouldShowActionBars()
     local result = false
     -- show player frame if player has a target
@@ -310,6 +322,8 @@ function Conceal:shouldShowActionBars()
     -- show if action bars are moused over
     if Conceal:isMouseOverActionBar() then result = true; end
 
+    if Conceal:IsAnyUIPanelOpen() then result = true; end
+
     return result;
 end
 
@@ -322,18 +336,19 @@ function Conceal:showPlayerFrame()
 end
 
 function Conceal:showAllActionBars()
-    for i=1,12 do
-        _G["ActionButton" ..i]:SetAlpha(1)
-    end
+    -- for i=1,12 do
+    --     _G["ActionButton" ..i]:SetAlpha(1)
+    -- end
+    ActionBar1:SetAlpha(1);
     ActionBar2:SetAlpha(1);
     ActionBar3:SetAlpha(1);
     ActionBar4:SetAlpha(1);
     ActionBar5:SetAlpha(1);
-    ActionBar6:SetAlpha(1);
-    ActionBar7:SetAlpha(1);
-    ActionBar8:SetAlpha(1);
-    PetActionBar:SetAlpha(1);
-    StanceBar:SetAlpha(1);
+    -- ActionBar6:SetAlpha(1);
+    -- ActionBar7:SetAlpha(1);
+    -- ActionBar8:SetAlpha(1);
+    -- PetActionBar:SetAlpha(1);
+    -- StanceBar:SetAlpha(1);
 end
 
 function Conceal:hidePlayerFrame()
@@ -341,7 +356,7 @@ function Conceal:hidePlayerFrame()
     -- if not InCombatLockdown() then
     --     PlayerFrame:EnableMouse(interactive);
     -- end
-    local frameAlpha = self.db.profile["alpha"] 
+    local frameAlpha = self.db.profile["alpha"]
     if frameAlpha > 1 then
         frameAlpha = frameAlpha / 100
     end
@@ -353,25 +368,28 @@ function Conceal:hideAllActionBars()
     if frameAlpha > 1 then
         frameAlpha = frameAlpha / 100
     end
-    if self.db.profile["actionBar1"] then
-        for i=1,12 do
-            _G["ActionButton" ..i]:SetAlpha(frameAlpha)
-        end
-    else 
-        for i=1,12 do
-            _G["ActionButton" ..i]:SetAlpha(1)
-        end
-    end
+    -- if self.db.profile["actionBar1"] then
+    --     -- for i=1,12 do
+    --     --     _G["ActionButton" ..i]:SetAlpha(frameAlpha)
+    --     -- end
+    --     ActionBar1:SetAlpha(frameAlpha)
+    -- else
+    --     -- for i=1,12 do
+    --     --     _G["ActionButton" ..i]:SetAlpha(1)
+    --     -- end
+    --     ActionBar1:SetAlpha(1)
+    -- end
+    if self.db.profile["actionBar1"] then ActionBar1:SetAlpha(frameAlpha); else ActionBar1:SetAlpha(1); end
     if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(frameAlpha); else ActionBar2:SetAlpha(1); end
     if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(frameAlpha); else ActionBar3:SetAlpha(1); end
     if self.db.profile["actionBar4"] then ActionBar4:SetAlpha(frameAlpha); else ActionBar4:SetAlpha(1); end
     if self.db.profile["actionBar5"] then ActionBar5:SetAlpha(frameAlpha); else ActionBar5:SetAlpha(1); end
-    if self.db.profile["actionBar6"] then ActionBar6:SetAlpha(frameAlpha); else ActionBar6:SetAlpha(1); end
-    if self.db.profile["actionBar7"] then ActionBar7:SetAlpha(frameAlpha); else ActionBar7:SetAlpha(1); end
-    if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(frameAlpha); else ActionBar8:SetAlpha(1); end
-    if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(frameAlpha); else PetActionBar:SetAlpha(1); end
-    if self.db.profile["stanceBar"] then StanceBar:SetAlpha(frameAlpha); else StanceBar:SetAlpha(1); end
-    
+    -- if self.db.profile["actionBar6"] then ActionBar6:SetAlpha(frameAlpha); else ActionBar6:SetAlpha(1); end
+    -- if self.db.profile["actionBar7"] then ActionBar7:SetAlpha(frameAlpha); else ActionBar7:SetAlpha(1); end
+    -- if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(frameAlpha); else ActionBar8:SetAlpha(1); end
+    -- if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(frameAlpha); else PetActionBar:SetAlpha(1); end
+    -- if self.db.profile["stanceBar"] then StanceBar:SetAlpha(frameAlpha); else StanceBar:SetAlpha(1); end
+
 end
 
 function Conceal:HideGcdFlash() --credit https://www.mmo-champion.com/threads/2414999-How-do-I-disable-the-GCD-flash-on-my-bars
@@ -382,9 +400,9 @@ function Conceal:HideGcdFlash() --credit https://www.mmo-champion.com/threads/24
     end
 end
 
-function Conceal:ProfileHandler() 
-    Conceal:loadConfig()  
-    Conceal:refreshGUI() 
+function Conceal:ProfileHandler()
+    Conceal:loadConfig()
+    Conceal:refreshGUI()
 end
 
 function Conceal:loadConfig()
@@ -425,7 +443,7 @@ end
 function Conceal:SetStatus(info)
     if self.db.profile[info[#info]] then
         self.db.profile[info[#info]] = false
-    else 
+    else
         self.db.profile[info[#info]] = true
         Conceal:loadConfig()
     end
