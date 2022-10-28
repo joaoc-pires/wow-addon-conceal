@@ -2,7 +2,6 @@ Conceal = LibStub("AceAddon-3.0"):NewAddon("Conceal", "AceConsole-3.0", "AceTime
 local AC = LibStub("AceConfig-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 
-
 local defaults = {
     profile = {
         interactive = true,
@@ -19,7 +18,10 @@ local defaults = {
         actionBar7 = true,
         actionBar8 = true,
         petActionBar = true,
-        stanceBar = true
+        stanceBar = true,
+        selfFrame = true,
+        microBar = false,
+        bagBar = false
     }
 }
 
@@ -34,28 +36,8 @@ local options = {
                 name = "General",
                 type = "header",              
             },
-            -- interactive = {
-            --     order = 1,
-            --     name = "Interactive",
-            --     desc = "Makes it possible to click the player frame even if mouse over is disabled",
-            --     type = "toggle",
-            --     get = "GetStatus",
-            --     set = "SetStatus",
-            --     width = "normal",
-            --     disabled = false,
-            -- },
-            -- mouseover = {
-            --     order = 2,
-            --     name = "Mouse Over",
-            --     desc = "If deselected hovering over an element with the mouse will not show the element. The tooltil will still show when hovering an element.",
-            --     type = "toggle",
-            --     get = "GetStatus",
-            --     set = "SetStatus",
-            --     width = "normal",
-            --     disabled = false,
-            -- },
             alpha = {
-                order = 3.1,
+                order = 1,
                 name = "Opacity",
                 desc = "Opacity of the elements when concealed.",
                 width = 2,
@@ -68,7 +50,7 @@ local options = {
                 disabled = false,
             },
             health = {
-                order = 3.2,
+                order = 2,
                 name = "Health Treshold",
                 desc = "The treshold which will trigger the elements to show if the Health % is bellow.",
                 width = 2,
@@ -78,6 +60,16 @@ local options = {
                 min = 0,
                 max = 100,   
                 step = 5,
+                disabled = false,
+            },
+            selfFrame = {
+                order = 3,
+                name = "Player Frame",
+                desc = "Conceal Player Frame.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 2,
                 disabled = false,
             },
             -- Action Bar Options
@@ -167,7 +159,7 @@ local options = {
                 disabled = false,
             },
             -- Other Bar Options
-            ActionBarHeader = {
+            OtherBarsHeader = {
                 order = 13,
                 name = "Other Bars",
                 type = "header",              
@@ -179,7 +171,7 @@ local options = {
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
-                width = "full",
+                width = 1.5,
                 disabled = false,
             },
             stanceBar = {
@@ -189,7 +181,17 @@ local options = {
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
-                width = "full",
+                width = 1.5,
+                disabled = false,
+            },
+            microBar = {
+                order = 16,
+                name = "Micro Bar and Bags",
+                desc = "Conceal Blizzard's micro bar and Bags.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
                 disabled = false,
             },
     }
@@ -211,7 +213,7 @@ function Conceal:OnInitialize()
     AC:RegisterOptionsTable("Conceal_options", options) 
     self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")  
     
-    Conceal:RegisterEvent("ADDON_LOADED", "refreshGUI");
+    Conceal:RegisterEvent("ADDON_LOADED", "loadConfig");
     Conceal:RegisterEvent("PLAYER_ENTERING_WORLD", "refreshGUI");
     Conceal:RegisterEvent("PLAYER_LEAVING_WORLD", "refreshGUI");
     Conceal:RegisterEvent("PLAYER_ENTER_COMBAT", "refreshGUI");
@@ -221,6 +223,16 @@ function Conceal:OnInitialize()
     Conceal:RegisterEvent("PLAYER_TARGET_CHANGED", "refreshGUI");
     
     Conceal:HideGcdFlash()
+    
+    C_Timer.NewTicker(0.10, function()
+        if Conceal:shouldShowElements() then 
+            Conceal:showPlayerFrame();
+            Conceal:showAllActionBars();
+        else
+            Conceal:hidePlayerFrame();
+            Conceal:hideAllActionBars();
+        end
+    end)
 end
 
 function Conceal:UpdateHealth(units)
@@ -243,19 +255,15 @@ function Conceal:isHealthOutsideThreshold()
 end
 
 function Conceal:isMouseOverPlayerFrame()
-    -- local mouseover = self.db.profile["mouseover"] and true or false;
-    -- if mouseover and PlayerFrame:IsMouseOver() then
-    --     return true;
-    -- else
-    --     return false;
-    -- end
-
-    return PlayerFrame:IsMouseOver()
+    local isPlayerFrameConcealable = self.db.profile["selfFrame"] 
+    if isPlayerFrameConcealable then
+        return PlayerFrame:IsMouseOver()
+    else
+        return false;
+    end
 end
 
 function Conceal:isMouseOverActionBar()
-    -- local mouseover = self.db.profile["mouseover"] and true or false;
-    -- if not mouseover then return false end
     if self.db.profile["actionBar1"] then
         for i=1,12 do 
             if _G["ActionButton" ..i]:IsMouseOver() then return true; end
@@ -270,14 +278,16 @@ function Conceal:isMouseOverActionBar()
     if self.db.profile["actionBar8"] then if ActionBar8:IsMouseOver() then return true; end end
     if self.db.profile["petActionBar"] then if PetActionBar:IsMouseOver() then return true; end end
     if self.db.profile["stanceBar"] then if StanceBar:IsMouseOver() then return true; end end
+    if self.db.profile["microBar"] then if MicroButtonAndBagsBar:IsMouseOver() then return true; end end
     return false
 end
 
-function Conceal:shouldShowPlayerFrame()
-    -- show player frame if player has a target
+function Conceal:shouldShowElements()
+
+    -- show elements if player has a target
     if UnitExists("target") then return true; end
 
-    -- show player frame if player is in combat
+    -- show elements if player is in combat
     if UnitAffectingCombat("player") then return true; end
 
     -- show player frame if player health is < 100%
@@ -289,36 +299,12 @@ function Conceal:shouldShowPlayerFrame()
     -- show if action bars are moused over
     if Conceal:isMouseOverActionBar() then return true; end
 
-    -- otherwise, hide the player frame
     return false;
-end
-
-function Conceal:shouldShowActionBars()
-    local result = false
-    -- show player frame if player has a target
-    if UnitExists("target") then result = true; end
-
-    -- show player frame if player is in combat
-    if UnitAffectingCombat("player") then result = true; end
-
-    -- show player frame if player health is < 100%
-    if Conceal:isHealthOutsideThreshold() then result = true; end
-
-    -- show if player frame is moused over
-    if Conceal:isMouseOverPlayerFrame() then result = true; end
-
-    -- show if action bars are moused over
-    if Conceal:isMouseOverActionBar() then result = true; end
-
-    return result;
 end
 
 function Conceal:showPlayerFrame()
     PlayerFrame:SetAlpha(1);
     PlayerFrame:EnableMouse(true);
-    -- if not PlayerFrame:IsMouseEnabled() then
-    --     PlayerFrame:EnableMouse(true);
-    -- end
 end
 
 function Conceal:showAllActionBars()
@@ -334,18 +320,19 @@ function Conceal:showAllActionBars()
     ActionBar8:SetAlpha(1);
     PetActionBar:SetAlpha(1);
     StanceBar:SetAlpha(1);
+    MicroButtonAndBagsBar:SetAlpha(1); 
 end
 
 function Conceal:hidePlayerFrame()
-    -- local interactive = self.db.profile["interactive"] and true or false;
-    -- if not InCombatLockdown() then
-    --     PlayerFrame:EnableMouse(interactive);
-    -- end
-    local frameAlpha = self.db.profile["alpha"] 
-    if frameAlpha > 1 then
-        frameAlpha = frameAlpha / 100
+    local finalAlpha = 1
+    local isPlayerFrameConcealable = self.db.profile["selfFrame"] 
+    if isPlayerFrameConcealable then 
+        local frameAlpha = self.db.profile["alpha"] 
+        if frameAlpha > 1 then
+            finalAlpha = frameAlpha / 100
+        end
     end
-    PlayerFrame:SetAlpha(frameAlpha);
+    PlayerFrame:SetAlpha(finalAlpha);
 end
 
 function Conceal:hideAllActionBars()
@@ -371,10 +358,15 @@ function Conceal:hideAllActionBars()
     if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(frameAlpha); else ActionBar8:SetAlpha(1); end
     if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(frameAlpha); else PetActionBar:SetAlpha(1); end
     if self.db.profile["stanceBar"] then StanceBar:SetAlpha(frameAlpha); else StanceBar:SetAlpha(1); end
-    
+    if self.db.profile["microBar"] then 
+        MicroButtonAndBagsBar:SetAlpha(frameAlpha);
+    else
+        MicroButtonAndBagsBar:SetAlpha(1); 
+    end    
 end
 
-function Conceal:HideGcdFlash() --credit https://www.mmo-champion.com/threads/2414999-How-do-I-disable-the-GCD-flash-on-my-bars
+--credit https://www.mmo-champion.com/threads/2414999-How-do-I-disable-the-GCD-flash-on-my-bars
+function Conceal:HideGcdFlash() 
     for i,v in pairs(_G) do
         if type(v)=="table" and type(v.SetDrawBling)=="function" then
             v:SetDrawBling(false)
@@ -383,37 +375,23 @@ function Conceal:HideGcdFlash() --credit https://www.mmo-champion.com/threads/24
 end
 
 function Conceal:ProfileHandler() 
+
     Conceal:loadConfig()  
     Conceal:refreshGUI() 
 end
 
 function Conceal:loadConfig()
-
+    -- Unused for now
 end
 
 function Conceal:refreshGUI()
-    if Conceal:shouldShowPlayerFrame() then
+    if Conceal:shouldShowElements() then 
         Conceal:showPlayerFrame();
-    else
-        Conceal:hidePlayerFrame();
-    end
-    if Conceal:shouldShowActionBars() then
         Conceal:showAllActionBars();
     else
+        Conceal:hidePlayerFrame();
         Conceal:hideAllActionBars();
     end
-    C_Timer.NewTicker(0.10, function()
-        if Conceal:shouldShowPlayerFrame() then
-            Conceal:showPlayerFrame();
-        else
-            Conceal:hidePlayerFrame();
-        end
-        if Conceal:shouldShowActionBars() then
-            Conceal:showAllActionBars();
-        else
-            Conceal:hideAllActionBars();
-        end
-    end)
 end
 
 function Conceal:GetStatus(info)
