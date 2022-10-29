@@ -12,25 +12,27 @@ local defaults = {
         actionBar1 = true,
         actionBar1ConcealDuringCombat = false,
         actionBar2 = true,
-        actionBar2ConcealDuringCombat = true,
+        actionBar2ConcealDuringCombat = false,
         actionBar3 = true,
-        actionBar3ConcealDuringCombat = true,
+        actionBar3ConcealDuringCombat = false,
         actionBar4 = true,
-        actionBar4ConcealDuringCombat = true,
+        actionBar4ConcealDuringCombat = false,
         actionBar5 = true,
-        actionBar5ConcealDuringCombat = true,
+        actionBar5ConcealDuringCombat = false,
         actionBar6 = true,
-        actionBar6ConcealDuringCombat = true,
+        actionBar6ConcealDuringCombat = false,
         actionBar7 = true,
-        actionBar7ConcealDuringCombat = true,
+        actionBar7ConcealDuringCombat = false,
         actionBar8 = true,
-        actionBar8ConcealDuringCombat = true,
+        actionBar8ConcealDuringCombat = false,
         petActionBar = true,
-        petActionBarConcealDuringCombat = true,
+        petActionBarConcealDuringCombat = false,
         stanceBar = true,
-        stanceBarConcealDuringCombat = true,
+        stanceBarConcealDuringCombat = false,
         selfFrame = true,
-        selfFrameConcealDuringCombat = true,
+        selfFrameConcealDuringCombat = false,
+        targetFrame = false,
+        targetFrameConcealDuringCombat = false,
         microBar = false,
         microBarConcealDuringCombat = false
     }
@@ -92,6 +94,26 @@ local options = {
                 order = 3.2,
                 name = "Conceal During Combat",
                 desc = "Conceal Player Frame during combat, and low HP.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            targetFrame = {
+                order = 3.3,
+                name = "Conceal Target Frame",
+                desc = "Hides the Player Frame using the defined Alpha.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            targetFrameConcealDuringCombat = {
+                order = 3.4,
+                name = "Conceal During Combat",
+                desc = "Conceal Target Frame during combat, and low HP.",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -428,6 +450,7 @@ end
 function Conceal:ShowCombatElements()
 
     if self.db.profile["selfFrame"] and not self.db.profile["selfFrameConcealDuringCombat"] then PlayerFrame:SetAlpha(1) end
+    if self.db.profile["targetFrame"] and not self.db.profile["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
 
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"] 
@@ -461,6 +484,14 @@ function Conceal:ShowMouseOverElements()
             PlayerFrame:SetAlpha(1); 
         elseif self.db.profile["selfFrameConcealDuringCombat"] then 
             PlayerFrame:SetAlpha(frameAlpha); 
+        end 
+    end
+
+    if self.db.profile["targetFrame"] then 
+        if TargetFrame:IsMouseOver() then 
+            TargetFrame:SetAlpha(1); 
+        elseif self.db.profile["targetFrameConcealDuringCombat"] then 
+            TargetFrame:SetAlpha(frameAlpha); 
         end 
     end
 
@@ -563,6 +594,7 @@ function Conceal:HideElements()
     
     -- Player Frame
     if self.db.profile["selfFrame"] and not PlayerFrame:IsMouseOver() then PlayerFrame:SetAlpha(frameAlpha); end
+    if self.db.profile["targetFrame"] and not TargetFrame:IsMouseOver() then TargetFrame:SetAlpha(frameAlpha); end
 
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"]
@@ -648,6 +680,7 @@ function Conceal:SetStatus(info)
     if self.db.profile[info[#info]] then
         self.db.profile[info[#info]] = false
         if info[#info] == "selfFrame" then PlayerFrame:SetAlpha(1); self.db.profile["selfFrameConcealDuringCombat"] = false end
+        if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); self.db.profile["targetFrameConcealDuringCombat"] = false end
         if info[#info] == "actionBar1" then 
             for i=1,12 do
                 _G["ActionButton" ..i]:SetAlpha(1)
@@ -663,10 +696,11 @@ function Conceal:SetStatus(info)
         if info[#info] == "actionBar8" then ActionBar8:SetAlpha(1); self.db.profile["actionBar8ConcealDuringCombat"] = false end
         if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); self.db.profile["petActionBarConcealDuringCombat"] = false end
         if info[#info] == "stanceBar" then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
-        if info[#info] == "microBar" then MicroBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
+        if info[#info] == "microBar" then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
     else 
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
+        if info[#info] == "targetFrameConcealDuringCombat" then self.db.profile["targetFrame"] = true end
         if info[#info] == "actionBar1ConcealDuringCombat" then self.db.profile["actionBar1"] = true end
         if info[#info] == "actionBar2ConcealDuringCombat" then self.db.profile["actionBar2"] = true end
         if info[#info] == "actionBar3ConcealDuringCombat" then self.db.profile["actionBar3"] = true end
