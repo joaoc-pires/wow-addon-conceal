@@ -1,0 +1,8 @@
+.release
+.env
+/libs
+
+bootstrap
+
+build
+setup

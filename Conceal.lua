@@ -19,6 +19,7 @@ local defaults = {
         actionBar4ConcealDuringCombat = false,
         actionBar5 = true,
         actionBar5ConcealDuringCombat = false,
+        --@retail@
         actionBar6 = true,
         actionBar6ConcealDuringCombat = false,
         actionBar7 = true,
@@ -35,6 +36,7 @@ local defaults = {
         targetFrameConcealDuringCombat = false,
         microBar = false,
         microBarConcealDuringCombat = false
+        --@end-retail@
     }
 }
 
@@ -47,7 +49,7 @@ local options = {
             GeneralHeader = {
                 order = 0,
                 name = "General",
-                type = "header",              
+                type = "header",
             },
             alpha = {
                 order = 1,
@@ -58,7 +60,7 @@ local options = {
                 get = "GetSlider",
                 set = "SetSlider",
                 min = 0,
-                max = 100,   
+                max = 100,
                 step = 5,
                 disabled = false,
             },
@@ -71,14 +73,14 @@ local options = {
                 get = "GetSlider",
                 set = "SetSlider",
                 min = 0,
-                max = 100,   
+                max = 100,
                 step = 5,
                 disabled = false,
             },
             GeneralHeader = {
                 order = 3,
                 name = "Player Frame",
-                type = "header",              
+                type = "header",
             },
             selfFrame = {
                 order = 3.1,
@@ -124,7 +126,7 @@ local options = {
             ActionBar1Header = {
                 order = 4,
                 name = "Action Bar 1",
-                type = "header",              
+                type = "header",
             },
             actionBar1 = {
                 order = 4.1,
@@ -150,7 +152,7 @@ local options = {
             ActionBar2Header = {
                 order = 5,
                 name = "Action Bar 2",
-                type = "header",              
+                type = "header",
             },
             actionBar2 = {
                 order = 5.1,
@@ -176,7 +178,7 @@ local options = {
             ActionBar3Header = {
                 order = 6,
                 name = "Action Bar 3",
-                type = "header",              
+                type = "header",
             },
             actionBar3 = {
                 order = 6.1,
@@ -202,7 +204,7 @@ local options = {
             ActionBar4Header = {
                 order = 7,
                 name = "Action Bar 4",
-                type = "header",              
+                type = "header",
             },
             actionBar4 = {
                 order = 7.1,
@@ -228,7 +230,7 @@ local options = {
             ActionBar5Header = {
                 order = 8,
                 name = "Action Bar 5",
-                type = "header",              
+                type = "header",
             },
             actionBar5 = {
                 order = 8.1,
@@ -251,10 +253,11 @@ local options = {
                 disabled = false,
             },
             -- Action Bar 6 Options
+            --@retail@
             ActionBar6Header = {
                 order = 9,
                 name = "Action Bar 6",
-                type = "header",              
+                type = "header",
             },
             actionBar6 = {
                 order = 9.1,
@@ -280,7 +283,7 @@ local options = {
             ActionBar7Header = {
                 order = 10,
                 name = "Action Bar 7",
-                type = "header",              
+                type = "header",
             },
             actionBar7 = {
                 order = 10.1,
@@ -306,7 +309,7 @@ local options = {
             ActionBar8Header = {
                 order = 11,
                 name = "Action Bar 8",
-                type = "header",              
+                type = "header",
             },
             actionBar8 = {
                 order = 11.1,
@@ -332,7 +335,7 @@ local options = {
             OtherBarsHeader = {
                 order = 13,
                 name = "Other Bars",
-                type = "header",              
+                type = "header",
             },
             petActionBar = {
                 order = 13.1,
@@ -394,27 +397,33 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
+            --@end-retail@
     }
 }
 
 local isInCombat = false
 
+--@non-retail@
+ActionBar1 = MainMenuBar
+--@end-non-retail@
 ActionBar2 = MultiBarBottomLeft
 ActionBar3 = MultiBarBottomRight
-ActionBar4 = MultiBarRight 
+ActionBar4 = MultiBarRight
 ActionBar5 = MultiBarLeft
+--@retail@
 ActionBar6 = MultiBar5
 ActionBar7 = MultiBar6
 ActionBar8 = MultiBar7
+--@end-retail@
 
 function Conceal:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("ConcealDB", defaults, true) 
+    self.db = LibStub("AceDB-3.0"):New("ConcealDB", defaults, true)
     self.db.RegisterCallback(self, "OnProfileChanged", "ProfileHandler")
     self.db.RegisterCallback(self, "OnProfileCopied", "ProfileHandler")
     self.db.RegisterCallback(self, "OnProfileReset", "ProfileHandler")
-    AC:RegisterOptionsTable("Conceal_options", options) 
-    self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")  
-    
+    AC:RegisterOptionsTable("Conceal_options", options)
+    self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")
+
     Conceal:RegisterEvent("ADDON_LOADED", "loadConfig");
     -- Conceal:RegisterEvent("PLAYER_ENTERING_WORLD", "refreshGUI");
     -- Conceal:RegisterEvent("PLAYER_LEAVING_WORLD", "refreshGUI");
@@ -423,9 +432,9 @@ function Conceal:OnInitialize()
     Conceal:RegisterEvent("PLAYER_REGEN_DISABLED", "DidEnterCombat");
     Conceal:RegisterEvent("PLAYER_REGEN_ENABLED", "DidExitCombat");
     Conceal:RegisterEvent("PLAYER_TARGET_CHANGED", "TargetChanged");
-    
+
     Conceal:HideGcdFlash()
-    
+
     C_Timer.NewTicker(0.10, function()
         Conceal:ShowMouseOverElements()
         Conceal:RefreshGUI()
@@ -453,14 +462,14 @@ function Conceal:ShowCombatElements()
     if self.db.profile["targetFrame"] and not self.db.profile["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
 
     -- Action Bar 1
-    local isActionBar1Concealable = self.db.profile["actionBar1"] 
-    local concealActionBar1InCombat = self.db.profile["actionBar1ConcealDuringCombat"] 
-    if isActionBar1Concealable and not concealActionBar1InCombat then 
+    local isActionBar1Concealable = self.db.profile["actionBar1"]
+    local concealActionBar1InCombat = self.db.profile["actionBar1ConcealDuringCombat"]
+    if isActionBar1Concealable and not concealActionBar1InCombat then
         for i=1,12 do
             _G["ActionButton" ..i]:SetAlpha(1)
         end
     end
-    
+
     if self.db.profile["actionBar2"] and not self.db.profile["actionBar2ConcealDuringCombat"] then ActionBar2:SetAlpha(1) end
     if self.db.profile["actionBar3"] and not self.db.profile["actionBar3ConcealDuringCombat"] then ActionBar3:SetAlpha(1) end
     if self.db.profile["actionBar4"] and not self.db.profile["actionBar4ConcealDuringCombat"] then ActionBar4:SetAlpha(1) end
@@ -479,20 +488,20 @@ function Conceal:ShowMouseOverElements()
     local frameAlpha = self.db.profile["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
-    if self.db.profile["selfFrame"] then 
-        if PlayerFrame:IsMouseOver() then 
-            PlayerFrame:SetAlpha(1); 
-        elseif self.db.profile["selfFrameConcealDuringCombat"] then 
-            PlayerFrame:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["selfFrame"] then
+        if PlayerFrame:IsMouseOver() then
+            PlayerFrame:SetAlpha(1);
+        elseif self.db.profile["selfFrameConcealDuringCombat"] then
+            PlayerFrame:SetAlpha(frameAlpha);
+        end
     end
 
-    if self.db.profile["targetFrame"] then 
-        if TargetFrame:IsMouseOver() then 
-            TargetFrame:SetAlpha(1); 
-        elseif self.db.profile["targetFrameConcealDuringCombat"] then 
-            TargetFrame:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["targetFrame"] then
+        if TargetFrame:IsMouseOver() then
+            TargetFrame:SetAlpha(1);
+        elseif self.db.profile["targetFrameConcealDuringCombat"] then
+            TargetFrame:SetAlpha(frameAlpha);
+        end
     end
 
     -- Action Bar 1
@@ -502,7 +511,7 @@ function Conceal:ShowMouseOverElements()
         for i=1,12 do
             if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
         end
-        if isMouseOverActionBar1 then 
+        if isMouseOverActionBar1 then
             for i=1,12 do
                 _G["ActionButton" ..i]:SetAlpha(1)
             end
@@ -513,76 +522,86 @@ function Conceal:ShowMouseOverElements()
         end
     end
 
-    if self.db.profile["actionBar2"] then 
-        if ActionBar2:IsMouseOver() then 
-            ActionBar2:SetAlpha(1); 
-        elseif self.db.profile["actionBar2ConcealDuringCombat"] then 
-            ActionBar2:SetAlpha(frameAlpha); 
-        end 
-    end 
-    if self.db.profile["actionBar3"] then 
-        if ActionBar3:IsMouseOver() then 
-            ActionBar3:SetAlpha(1); 
-        elseif self.db.profile["actionBar3ConcealDuringCombat"] then 
-            ActionBar3:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar2"] then
+        if ActionBar2:IsMouseOver() then
+            ActionBar2:SetAlpha(1);
+        elseif self.db.profile["actionBar2ConcealDuringCombat"] then
+            ActionBar2:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["actionBar4"] then 
-        if ActionBar4:IsMouseOver() then 
-            ActionBar4:SetAlpha(1); 
-        elseif self.db.profile["actionBar4ConcealDuringCombat"] then 
-            ActionBar4:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar3"] then
+        if ActionBar3:IsMouseOver() then
+            ActionBar3:SetAlpha(1);
+        elseif self.db.profile["actionBar3ConcealDuringCombat"] then
+            ActionBar3:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["actionBar5"] then 
-        if ActionBar5:IsMouseOver() then 
-            ActionBar5:SetAlpha(1); 
-        elseif self.db.profile["actionBar5ConcealDuringCombat"] then 
-            ActionBar5:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar4"] then
+        if ActionBar4:IsMouseOver() then
+            ActionBar4:SetAlpha(1);
+        elseif self.db.profile["actionBar4ConcealDuringCombat"] then
+            ActionBar4:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["actionBar6"] then 
-        if ActionBar6:IsMouseOver() then 
-            ActionBar6:SetAlpha(1); 
-        elseif self.db.profile["actionBar6ConcealDuringCombat"] then 
-            ActionBar6:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar5"] then
+        if ActionBar5:IsMouseOver() then
+            ActionBar5:SetAlpha(1);
+        elseif self.db.profile["actionBar5ConcealDuringCombat"] then
+            ActionBar5:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["actionBar7"] then 
-        if ActionBar7:IsMouseOver() then 
-            ActionBar7:SetAlpha(1); 
-        elseif self.db.profile["actionBar7ConcealDuringCombat"] then 
-            ActionBar7:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar6"] then
+        if ActionBar6:IsMouseOver() then
+            ActionBar6:SetAlpha(1);
+        elseif self.db.profile["actionBar6ConcealDuringCombat"] then
+            ActionBar6:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["actionBar8"] then 
-        if ActionBar8:IsMouseOver() then 
-            ActionBar8:SetAlpha(1); 
-        elseif self.db.profile["actionBar8ConcealDuringCombat"] then 
-            ActionBar8:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar7"] then
+        if ActionBar7:IsMouseOver() then
+            ActionBar7:SetAlpha(1);
+        elseif self.db.profile["actionBar7ConcealDuringCombat"] then
+            ActionBar7:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["petActionBar"] then 
-        if PetActionBar:IsMouseOver() then 
-            PetActionBar:SetAlpha(1); 
-        elseif self.db.profile["petActionBarConcealDuringCombat"] then 
-            PetActionBar:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["actionBar8"] then
+        if ActionBar8:IsMouseOver() then
+            ActionBar8:SetAlpha(1);
+        elseif self.db.profile["actionBar8ConcealDuringCombat"] then
+            ActionBar8:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["stanceBar"]  then 
-        if StanceBar:IsMouseOver() then 
-            StanceBar:SetAlpha(1); 
-        elseif self.db.profile["stanceBarConcealDuringCombat"] then 
-            StanceBar:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["petActionBar"] then
+        if PetActionBar:IsMouseOver() then
+            PetActionBar:SetAlpha(1);
+        elseif self.db.profile["petActionBarConcealDuringCombat"] then
+            PetActionBar:SetAlpha(frameAlpha);
+        end
     end
-    if self.db.profile["microBar"]  then 
-        if MicroButtonAndBagsBar:IsMouseOver() then 
-            MicroButtonAndBagsBar:SetAlpha(1); 
-        elseif self.db.profile["microBarConcealDuringCombat"] then 
-            MicroButtonAndBagsBar:SetAlpha(frameAlpha); 
-        end 
+    if self.db.profile["stanceBar"]  then
+        if StanceBar:IsMouseOver() then
+            StanceBar:SetAlpha(1);
+        elseif self.db.profile["stanceBarConcealDuringCombat"] then
+            StanceBar:SetAlpha(frameAlpha);
+        end
     end
+    if self.db.profile["microBar"]  then
+        if MicroButtonAndBagsBar:IsMouseOver() then
+            MicroButtonAndBagsBar:SetAlpha(1);
+        elseif self.db.profile["microBarConcealDuringCombat"] then
+            MicroButtonAndBagsBar:SetAlpha(frameAlpha);
+        end
+    end
+end
+
+function Conceal:IsAnyUIPanelOpen()
+    local       leftFrame = GetUIPanel("left")
+    local     centerFrame = GetUIPanel("center")
+    local      rightFrame = GetUIPanel("right")
+    local doublewideFrame = GetUIPanel("doublewide")
+    local fullScreenFrame = GetUIPanel("fullscreen")
+    local found = leftFrame or centerFrame or rightFrame or doublewideFrame or fullScreenFrame
+    return found ~= nil
 end
 
 function Conceal:HideElements()
@@ -591,7 +610,7 @@ function Conceal:HideElements()
 
     local frameAlpha = self.db.profile["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
-    
+
     -- Player Frame
     if self.db.profile["selfFrame"] and not PlayerFrame:IsMouseOver() then PlayerFrame:SetAlpha(frameAlpha); end
     if self.db.profile["targetFrame"] and not TargetFrame:IsMouseOver() then TargetFrame:SetAlpha(frameAlpha); end
@@ -602,7 +621,7 @@ function Conceal:HideElements()
     for i=1,12 do
         if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
     end
-    if isActionBar1Concealable and not isMouseOverActionBar1 then 
+    if isActionBar1Concealable and not isMouseOverActionBar1 then
         for i=1,12 do
             _G["ActionButton" ..i]:SetAlpha(frameAlpha)
         end
@@ -621,7 +640,7 @@ function Conceal:HideElements()
 end
 
 function Conceal:TargetChanged()
-    if UnitExists("target") then 
+    if UnitExists("target") then
          Conceal:ShowCombatElements();
     else
         Conceal:HideElements()
@@ -630,19 +649,19 @@ end
 
 
 -- Event Handlers
-function Conceal:DidEnterCombat() 
+function Conceal:DidEnterCombat()
     Conceal:ShowCombatElements()
     isInCombat = true
 end
 
-function Conceal:DidExitCombat() 
+function Conceal:DidExitCombat()
     Conceal:HideElements()
     isInCombat = false
 end
 
 
 --credit https://www.mmo-champion.com/threads/2414999-How-do-I-disable-the-GCD-flash-on-my-bars
-function Conceal:HideGcdFlash() 
+function Conceal:HideGcdFlash()
     for i,v in pairs(_G) do
         if type(v)=="table" and type(v.SetDrawBling)=="function" then
             v:SetDrawBling(false)
@@ -650,7 +669,7 @@ function Conceal:HideGcdFlash()
     end
 end
 
-function Conceal:ProfileHandler() 
+function Conceal:ProfileHandler()
     Conceal:loadConfig();
     Conceal:RefreshGUI();
 end
@@ -663,7 +682,7 @@ function Conceal:RefreshGUI()
     local shouldShowCombatElement = false
     if UnitExists("target") then shouldShowCombatElement = shouldShowCombatElement or true; end
     if Conceal:isHealthBelowThreshold() then shouldShowCombatElement = shouldShowCombatElement or true; end
-    if shouldShowCombatElement then 
+    if shouldShowCombatElement then
         Conceal:ShowCombatElements();
     else
         Conceal:HideElements()
@@ -676,16 +695,16 @@ function Conceal:GetStatus(info)
     return self.db.profile[info[#info]]
 end
 
-function Conceal:SetStatus(info) 
+function Conceal:SetStatus(info)
     if self.db.profile[info[#info]] then
         self.db.profile[info[#info]] = false
         if info[#info] == "selfFrame" then PlayerFrame:SetAlpha(1); self.db.profile["selfFrameConcealDuringCombat"] = false end
         if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); self.db.profile["targetFrameConcealDuringCombat"] = false end
-        if info[#info] == "actionBar1" then 
+        if info[#info] == "actionBar1" then
             for i=1,12 do
                 _G["ActionButton" ..i]:SetAlpha(1)
             end
-            self.db.profile["actionBar1ConcealDuringCombat"] = false 
+            self.db.profile["actionBar1ConcealDuringCombat"] = false
         end
         if info[#info] == "actionBar2" then ActionBar2:SetAlpha(1); self.db.profile["actionBar2ConcealDuringCombat"] = false end
         if info[#info] == "actionBar3" then ActionBar3:SetAlpha(1); self.db.profile["actionBar3ConcealDuringCombat"] = false end
@@ -697,7 +716,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); self.db.profile["petActionBarConcealDuringCombat"] = false end
         if info[#info] == "stanceBar" then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
         if info[#info] == "microBar" then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
-    else 
+    else
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
         if info[#info] == "targetFrameConcealDuringCombat" then self.db.profile["targetFrame"] = true end

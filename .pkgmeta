@@ -1,0 +1,9 @@
+package-as: Conceal
+
+externals:
+
+ignore:
+  - setup
+  - build
+  - LICENSE
+  - README
