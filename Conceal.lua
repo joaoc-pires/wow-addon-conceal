@@ -9,12 +9,18 @@ local defaults = {
         power = false,
         mouseover = true,
         alpha = 30,
+        --@non-retail@
+        mainActionBars = true,
+        mainActionBarsConcealDuringCombat = false,
+        --@end-non-retail@
+        --@retail@
         actionBar1 = true,
         actionBar1ConcealDuringCombat = false,
         actionBar2 = true,
         actionBar2ConcealDuringCombat = false,
         actionBar3 = true,
         actionBar3ConcealDuringCombat = false,
+        --@end-retail@
         actionBar4 = true,
         actionBar4ConcealDuringCombat = false,
         actionBar5 = true,
@@ -122,6 +128,7 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
+            --@retail@
             -- Action Bar 1 Options
             ActionBar1Header = {
                 order = 4,
@@ -200,6 +207,34 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
+            --@end-retail@
+            --@non-retail@
+            MainActionBarsHeader = {
+                order = 4,
+                name = "Main Actionbars",
+                type = "header",
+            },
+            mainActionBars = {
+                order = 4.1,
+                name = "Conceal Main Action Bars",
+                desc = "Hides the main, bottomleft, bottomright and all menus/stances",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            mainActionBarsConcealDuringCombat = {
+                order = 4.2,
+                name = "Conceal During Combat",
+                desc = "Conceal Hides the main, bottomleft, bottomright and all menus/stances during combat, and low HP.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            --@end-non-retail@
             -- Action Bar 4 Options
             ActionBar4Header = {
                 order = 7,
@@ -252,8 +287,8 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
-            -- Action Bar 6 Options
             --@retail@
+            -- Action Bar 6 Options
             ActionBar6Header = {
                 order = 9,
                 name = "Action Bar 6",
@@ -403,9 +438,11 @@ local options = {
 
 local isInCombat = false
 
+-- In any of the classic version Bar 1-3 are all part of MainMenuBar
 --@non-retail@
-ActionBar1 = MainMenuBar
+MainActionBars = MainMenuBar
 --@end-non-retail@
+
 ActionBar2 = MultiBarBottomLeft
 ActionBar3 = MultiBarBottomRight
 ActionBar4 = MultiBarRight
@@ -461,6 +498,7 @@ function Conceal:ShowCombatElements()
     if self.db.profile["selfFrame"] and not self.db.profile["selfFrameConcealDuringCombat"] then PlayerFrame:SetAlpha(1) end
     if self.db.profile["targetFrame"] and not self.db.profile["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
 
+    --@retail@
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"]
     local concealActionBar1InCombat = self.db.profile["actionBar1ConcealDuringCombat"]
@@ -481,7 +519,15 @@ function Conceal:ShowCombatElements()
 
     -- Stance Bar
     if self.db.profile["stanceBar"] and not self.db.profile["stanceBarConcealDuringCombat"]  then StanceBar:SetAlpha(1) end
-    if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"]  then MicroButtonAndBagsBar:SetAlpha(1) end
+    if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"] then MicroButtonAndBagsBar:
+        SetAlpha(1) end
+    --@end-retail@
+
+    --@non-retail@
+    if self.db.profile["mainActionBars"] and not self.db.profile["mainActionBarsConcealDuringCombat"] then MainActionBars:SetAlpha(1) end
+    if self.db.profile["actionBar4"] and not self.db.profile["actionBar4ConcealDuringCombat"] then ActionBar4:SetAlpha(1) end
+    if self.db.profile["actionBar5"] and not self.db.profile["actionBar5ConcealDuringCombat"] then ActionBar5:SetAlpha(1) end
+    --@end-non-retail@
 end
 
 function Conceal:ShowMouseOverElements()
@@ -504,6 +550,7 @@ function Conceal:ShowMouseOverElements()
         end
     end
 
+    --@retail@
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"]
     if isActionBar1Concealable then
@@ -536,6 +583,7 @@ function Conceal:ShowMouseOverElements()
             ActionBar3:SetAlpha(frameAlpha);
         end
     end
+    --@end-retail@
     if self.db.profile["actionBar4"] then
         if ActionBar4:IsMouseOver() then
             ActionBar4:SetAlpha(1);
@@ -550,6 +598,7 @@ function Conceal:ShowMouseOverElements()
             ActionBar5:SetAlpha(frameAlpha);
         end
     end
+    --@retail@
     if self.db.profile["actionBar6"] then
         if ActionBar6:IsMouseOver() then
             ActionBar6:SetAlpha(1);
@@ -592,6 +641,16 @@ function Conceal:ShowMouseOverElements()
             MicroButtonAndBagsBar:SetAlpha(frameAlpha);
         end
     end
+    --@end-retail@
+    --@non-retail@
+    if self.db.profile["mainActionBars"] then
+        if MainActionBars:IsMouseOver() or ActionBar2:IsMouseOver() or ActionBar3:IsMouseOver() then
+            MainActionBars:SetAlpha(1);
+        elseif self.db.profile["mainActionBarsConcealDuringCombat"] then
+            MainActionBars:SetAlpha(frameAlpha);
+        end
+    end
+    --@non-retail@
 end
 
 function Conceal:IsAnyUIPanelOpen()
@@ -616,6 +675,7 @@ function Conceal:HideElements()
     if self.db.profile["targetFrame"] and not TargetFrame:IsMouseOver() then TargetFrame:SetAlpha(frameAlpha); end
 
     -- Action Bar 1
+    --@retail@
     local isActionBar1Concealable = self.db.profile["actionBar1"]
     local isMouseOverActionBar1 = false
     for i=1,12 do
@@ -637,6 +697,13 @@ function Conceal:HideElements()
     if self.db.profile["petActionBar"] and not PetActionBar:IsMouseOver() then PetActionBar:SetAlpha(frameAlpha); end
     if self.db.profile["stanceBar"] and not StanceBar:IsMouseOver() then StanceBar:SetAlpha(frameAlpha); end
     if self.db.profile["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then MicroButtonAndBagsBar:SetAlpha(frameAlpha); end
+    --@end-retail@
+
+    --@non-retail@
+    if self.db.profile["mainActionBars"] and not MainActionBars:IsMouseOver() and not ActionBar2:IsMouseOver() and not ActionBar3:IsMouseOver() then MainActionBars:SetAlpha(frameAlpha); end
+    if self.db.profile["actionBar4"] and not ActionBar4:IsMouseOver() then ActionBar4:SetAlpha(frameAlpha); end
+    if self.db.profile["actionBar5"] and not ActionBar5:IsMouseOver() then ActionBar5:SetAlpha(frameAlpha); end
+    --@non-retail@
 end
 
 function Conceal:TargetChanged()
@@ -682,6 +749,7 @@ function Conceal:RefreshGUI()
     local shouldShowCombatElement = false
     if UnitExists("target") then shouldShowCombatElement = shouldShowCombatElement or true; end
     if Conceal:isHealthBelowThreshold() then shouldShowCombatElement = shouldShowCombatElement or true; end
+    if Conceal:IsAnyUIPanelOpen() then shouldShowCombatElement = shouldShowCombatElement or true; end
     if shouldShowCombatElement then
         Conceal:ShowCombatElements();
     else
@@ -716,6 +784,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); self.db.profile["petActionBarConcealDuringCombat"] = false end
         if info[#info] == "stanceBar" then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
         if info[#info] == "microBar" then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
+        if info[#info] == "mainActionBars" then MainActionBars:SetAlpha(1); self.db.profile["mainActionBarsConcealDuringCombat"] = false end
     else
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
@@ -731,6 +800,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "petActionBarConcealDuringCombat" then self.db.profile["petActionBar"] = true end
         if info[#info] == "stanceBarConcealDuringCombat" then self.db.profile["stanceBar"] = true end
         if info[#info] == "microBarConcealDuringCombat" then self.db.profile["microBar"] = true end
+        if info[#info] == "mainActionBarsConcealDuringCombat" then self.db.profile["mainActionBars"] = true end
         Conceal:loadConfig()
     end
     Conceal:RefreshGUI()
