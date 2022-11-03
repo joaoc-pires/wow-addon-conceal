@@ -10,6 +10,7 @@ local defaults = {
         mouseover = true,
         alpha = 30,
         animationDuration = 0.25,
+        fadeOutDuration = 0.25,
         actionBar1 = true,
         actionBar1ConcealDuringCombat = false,
         actionBar2 = true,
@@ -65,8 +66,21 @@ local options = {
             },
             animationDuration = {
                 order = 1.2,
-                name = "Fade Duration",
-                desc = "Controls the duration of the fade animation in seconds",
+                name = "Fade In Duration",
+                desc = "Controls the duration of the fade in animation in seconds",
+                width = 2,
+                type = "range",
+                get = "GetSlider",
+                set = "SetSlider",
+                min = 0,
+                max = 2,   
+                step = 0.05,
+                disabled = false,
+            },
+            fadeOutDuration = {
+                order = 1.3,
+                name = "Fade Out Duration",
+                desc = "Controls the duration of the fade out animation in seconds",
                 width = 2,
                 type = "range",
                 get = "GetSlider",
@@ -457,17 +471,15 @@ function Conceal:isHealthBelowThreshold()
     end
 end
 
-function Conceal:FadeIn(frame)
+function Conceal:FadeIn(frame, forced)
     local alphaTimer = self.db.profile["animationDuration"];
-    if alphaTimer == 0 then
-        alphaTimer = 0.01
-    end
+    if alphaTimer == 0 then alphaTimer = 0.01; end
     local frameAlpha = self.db.profile["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
     
     local currentAlpha = frame:GetAlpha()
     currentAlpha = tonumber(string.format("%.2f", currentAlpha))
-    if (currentAlpha == frameAlpha) then 
+    if (currentAlpha == frameAlpha) and not forced then 
     
         local animation = frame:CreateAnimationGroup();
         local fadeIn = animation:CreateAnimation("Alpha");
@@ -479,20 +491,21 @@ function Conceal:FadeIn(frame)
               
         animation:Play();
     end
+    if forced then 
+        frame:SetAlpha(frameAlpha)
+    end
 end
 
-function Conceal:FadeOut(frame)
-    local alphaTimer = self.db.profile["animationDuration"];
-    if alphaTimer == 0 then
-        alphaTimer = 0.01
-    end
+function Conceal:FadeOut(frame, forced)
+    local alphaTimer = self.db.profile["fadeOutDuration"];
+    if alphaTimer == 0 then alphaTimer = 0.01; end
     local frameAlpha = self.db.profile["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
     local currentAlpha = frame:GetAlpha()
     currentAlpha = tonumber(string.format("%.2f", currentAlpha))
 
-    if (currentAlpha == 1) then 
+    if (currentAlpha == 1) and not forced then 
         local animation = frame:CreateAnimationGroup();
         local fadeIn = animation:CreateAnimation("Alpha");
         fadeIn:SetFromAlpha(1);
@@ -502,6 +515,9 @@ function Conceal:FadeOut(frame)
         
         animation:SetToFinalAlpha(true)      
         animation:Play();
+    end
+    if forced then 
+        frame:SetAlpha(1)
     end
 end
 
@@ -736,6 +752,26 @@ function Conceal:GetStatus(info)
     return self.db.profile[info[#info]]
 end
 
+function Conceal:UpdateFramesToAlpha(alpha)
+    if self.db.profile["selfFrame"] then PlayerFrame:SetAlpha(alpha); end
+    if self.db.profile["targetFrame"] then TargetFrame:SetAlpha(alpha); end
+    if self.db.profile["actionBar1"] then 
+        for i=1,12 do
+            _G["ActionButton" ..i]:SetAlpha(alpha)
+        end
+    end
+    if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(alpha); end
+    if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(alpha); end
+    if self.db.profile["actionBar4"] then ActionBar4:SetAlpha(alpha); end
+    if self.db.profile["actionBar5"] then ActionBar5:SetAlpha(alpha); end
+    if self.db.profile["actionBar6"] then ActionBar6:SetAlpha(alpha); end
+    if self.db.profile["actionBar7"] then ActionBar7:SetAlpha(alpha); end
+    if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(alpha); end
+    if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(alpha); end
+    if self.db.profile["stanceBar"] then StanceBar:SetAlpha(alpha); end
+    if self.db.profile["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
+end
+
 function Conceal:SetStatus(info) 
     if self.db.profile[info[#info]] then
         self.db.profile[info[#info]] = false
@@ -783,4 +819,9 @@ end
 
 function Conceal:SetSlider(info, value)
     self.db.profile[info[#info]] = value
+    if info[#info] == "alpha" then 
+        local frameAlpha = value;
+        if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
+        Conceal:UpdateFramesToAlpha(frameAlpha)
+    end
 end
