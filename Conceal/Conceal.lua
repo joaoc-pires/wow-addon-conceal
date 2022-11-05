@@ -427,6 +427,7 @@ local options = {
 
 local isInCombat = false
 
+ActionBar1 = MainMenuBar
 ActionBar2 = MultiBarBottomLeft
 ActionBar3 = MultiBarBottomRight
 ActionBar4 = MultiBarRight 
@@ -530,12 +531,8 @@ function Conceal:ShowCombatElements()
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"] 
     local concealActionBar1InCombat = self.db.profile["actionBar1ConcealDuringCombat"] 
-    if isActionBar1Concealable and not concealActionBar1InCombat then 
-        for i=1,12 do
-            _G["ActionButton" ..i]:SetAlpha(1)
-        end
-    end
-    
+    if isActionBar1Concealable and not concealActionBar1InCombat then ActionBar1:SetAlpha(1) end
+
     if self.db.profile["actionBar2"] and not self.db.profile["actionBar2ConcealDuringCombat"] then ActionBar2:SetAlpha(1) end
     if self.db.profile["actionBar3"] and not self.db.profile["actionBar3ConcealDuringCombat"] then ActionBar3:SetAlpha(1) end
     if self.db.profile["actionBar4"] and not self.db.profile["actionBar4ConcealDuringCombat"] then ActionBar4:SetAlpha(1) end
@@ -578,14 +575,9 @@ function Conceal:ShowMouseOverElements()
             if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
         end
         if isMouseOverActionBar1 then 
-            for i=1,12 do
-                -- _G["ActionButton" ..i]:SetAlpha(1)
-                Conceal:FadeIn(_G["ActionButton" ..i])
-            end
+            Conceal:FadeIn(ActionBar1)
         elseif self.db.profile["actionBar1ConcealDuringCombat"] then
-            for i=1,12 do
-                Conceal:FadeOut(_G["ActionButton" ..i])
-            end
+            Conceal:FadeOut(ActionBar1)
         end
     end
 
@@ -679,9 +671,7 @@ function Conceal:HideElements()
         if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
     end
     if isActionBar1Concealable and not isMouseOverActionBar1 then 
-        for i=1,12 do
-            Conceal:FadeOut(_G["ActionButton" ..i])
-        end
+        Conceal:FadeOut(ActionBar1)
     end
 
     if self.db.profile["actionBar2"] and not ActionBar2:IsMouseOver() then Conceal:FadeOut(ActionBar2); end
@@ -756,9 +746,10 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if self.db.profile["selfFrame"] then PlayerFrame:SetAlpha(alpha); end
     if self.db.profile["targetFrame"] then TargetFrame:SetAlpha(alpha); end
     if self.db.profile["actionBar1"] then 
-        for i=1,12 do
-            _G["ActionButton" ..i]:SetAlpha(alpha)
-        end
+        -- for i=1,12 do
+        --     _G["ActionButton" ..i]:SetAlpha(alpha)
+        -- end
+        ActionBar1:SetAlpha(alpha)
     end
     if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(alpha); end
     if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(alpha); end
@@ -777,12 +768,7 @@ function Conceal:SetStatus(info)
         self.db.profile[info[#info]] = false
         if info[#info] == "selfFrame" then PlayerFrame:SetAlpha(1); self.db.profile["selfFrameConcealDuringCombat"] = false end
         if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); self.db.profile["targetFrameConcealDuringCombat"] = false end
-        if info[#info] == "actionBar1" then 
-            for i=1,12 do
-                _G["ActionButton" ..i]:SetAlpha(1)
-            end
-            self.db.profile["actionBar1ConcealDuringCombat"] = false 
-        end
+        if info[#info] == "actionBar1" then ActionBar1:SetAlpha(1); self.db.profile["actionBar1ConcealDuringCombat"] = false; end
         if info[#info] == "actionBar2" then ActionBar2:SetAlpha(1); self.db.profile["actionBar2ConcealDuringCombat"] = false end
         if info[#info] == "actionBar3" then ActionBar3:SetAlpha(1); self.db.profile["actionBar3ConcealDuringCombat"] = false end
         if info[#info] == "actionBar4" then ActionBar4:SetAlpha(1); self.db.profile["actionBar4ConcealDuringCombat"] = false end
