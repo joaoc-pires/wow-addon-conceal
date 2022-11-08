@@ -452,7 +452,7 @@ function Conceal:OnInitialize()
     Conceal:RegisterEvent("PLAYER_TARGET_CHANGED", "TargetChanged");
     
     Conceal:HideGcdFlash()
-    
+    QueueStatusButton:SetParent(UIParent);
     C_Timer.NewTicker(0.10, function()
         Conceal:ShowMouseOverElements()
         Conceal:RefreshGUI()
