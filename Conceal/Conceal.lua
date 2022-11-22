@@ -441,8 +441,13 @@ function Conceal:OnInitialize()
     self.db.RegisterCallback(self, "OnProfileChanged", "ProfileHandler")
     self.db.RegisterCallback(self, "OnProfileCopied", "ProfileHandler")
     self.db.RegisterCallback(self, "OnProfileReset", "ProfileHandler")
+
+    -- Options
     AC:RegisterOptionsTable("Conceal_options", options) 
     self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")  
+    -- local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) 
+    -- AC:RegisterOptionsTable("Conceal_Profiles", profiles)
+    -- ACD:AddToBlizOptions("Conceal_Profiles", "Profiles", "Conceal")   
     
     Conceal:RegisterEvent("ADDON_LOADED", "loadConfig");
     Conceal:RegisterEvent("PLAYER_ENTER_COMBAT", "DidEnterCombat");
@@ -450,7 +455,8 @@ function Conceal:OnInitialize()
     Conceal:RegisterEvent("PLAYER_REGEN_DISABLED", "DidEnterCombat");
     Conceal:RegisterEvent("PLAYER_REGEN_ENABLED", "DidExitCombat");
     Conceal:RegisterEvent("PLAYER_TARGET_CHANGED", "TargetChanged");
-    
+
+    Conceal:loadConfig()
     Conceal:HideGcdFlash()
     QueueStatusButton:SetParent(UIParent);
     C_Timer.NewTicker(0.10, function()
