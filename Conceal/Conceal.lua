@@ -38,7 +38,9 @@ local defaults = {
         targetFrame = false,
         targetFrameConcealDuringCombat = false,
         microBar = false,
-        microBarConcealDuringCombat = false
+        microBarConcealDuringCombat = false,
+        minimap = false,
+        minimapConcealDuringCombat = false
     }
 }
 
@@ -444,6 +446,26 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
+            -- minimap = {
+            --     order = 13.7,
+            --     name = "Conceal Minimap",
+            --     desc = "Hides the Minimap using the defined Alpha.",
+            --     type = "toggle",
+            --     get = "GetStatus",
+            --     set = "SetStatus",
+            --     width = 1.5,
+            --     disabled = false,
+            -- },
+            -- minimapConcealDuringCombat = {
+            --     order = 13.8,
+            --     name = "Conceal Minimap During Combat",
+            --     desc = "Conceal Minimap during combat, and low HP.",
+            --     type = "toggle",
+            --     get = "GetStatus",
+            --     set = "SetStatus",
+            --     width = 1.5,
+            --     disabled = false,
+            -- },
     }
 }
 
@@ -793,8 +815,7 @@ function Conceal:GetStatus(info)
 end
 
 function Conceal:UpdateFramesToAlpha(alpha)
-    if self.db.profile["selfFrame"] then PlayerFrame:SetAlpha(alpha); end
-    if self.db.profile["selfFrame"] then PetFrame:SetAlpha(alpha); end
+    if self.db.profile["selfFrame"] then PlayerFrame:SetAlpha(alpha); PetFrame:SetAlpha(alpha); end
     if self.db.profile["targetFrame"] then TargetFrame:SetAlpha(alpha); end
     if self.db.profile["buffFrame"] then BuffFrame:SetAlpha(alpha); end
     if self.db.profile["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
@@ -809,6 +830,13 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(alpha); end
     if self.db.profile["stanceBar"] then StanceBar:SetAlpha(alpha); end
     if self.db.profile["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
+    -- if self.db.profile["minimap"] then
+    --     local minimapChildren = { MinimapCluster:GetChildren() };
+    --     for _, child in ipairs(minimapChildren) do 
+    --         -- DEFAULT_CHAT_FRAME:AddMessage(child:GetName());
+    --         child:SetAlpha(alpha);
+    --     end
+    -- end
 end
 
 function Conceal:SetStatus(info) 
@@ -829,6 +857,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); self.db.profile["petActionBarConcealDuringCombat"] = false end
         if info[#info] == "stanceBar" then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
         if info[#info] == "microBar" then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
+        -- if info[#info] == "minimap" then ActionBar1:SetAlpha(1); self.db.profile["minimapConcealDuringCombat"] = false; end
     else 
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
@@ -844,6 +873,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "petActionBarConcealDuringCombat" then self.db.profile["petActionBar"] = true end
         if info[#info] == "stanceBarConcealDuringCombat" then self.db.profile["stanceBar"] = true end
         if info[#info] == "microBarConcealDuringCombat" then self.db.profile["microBar"] = true end
+        -- if info[#info] == "minimapConcealDuringCombat" then self.db.profile["minimap"] = true end
         Conceal:loadConfig()
     end
     Conceal:RefreshGUI()
