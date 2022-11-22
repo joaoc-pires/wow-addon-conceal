@@ -583,7 +583,7 @@ function Conceal:ShowMouseOverElements()
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
     if self.db.profile["selfFrame"] then 
-        if PlayerFrame:IsMouseOver() then 
+        if PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() then 
             Conceal:FadeIn(PlayerFrame)
             Conceal:FadeIn(PetFrame)
         elseif self.db.profile["selfFrameConcealDuringCombat"] then 
