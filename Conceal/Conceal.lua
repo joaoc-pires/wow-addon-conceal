@@ -40,7 +40,11 @@ local defaults = {
         microBar = false,
         microBarConcealDuringCombat = false,
         minimap = false,
-        minimapConcealDuringCombat = false
+        minimapConcealDuringCombat = false,
+        experience = false,
+        experienceConcealDuringCombat = false,
+        focusFrame = false,
+        focusFrameConcealDuringCombat = false,
     }
 }
 
@@ -109,7 +113,7 @@ local options = {
             },
             GeneralHeader = {
                 order = 3,
-                name = "Player Frame",
+                name = "Player Frames & Buffs",
                 type = "header",              
             },
             selfFrame = {
@@ -166,6 +170,26 @@ local options = {
                 order = 3.6,
                 name = "Conceal Debuffs Frame",
                 desc = "Hides the Player's Deuffs Frame using the defined Alpha. Will not be hidden during combat.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            focusFrame = {
+                order = 3.7,
+                name = "Conceal Focus Frame",
+                desc = "Hides the Focus Frame using the defined Alpha.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            focusFrameConcealDuringCombat = {
+                order = 3.8,
+                name = "Conceal During Combat",
+                desc = "Conceal Focus Frame during combat, and low HP.",
                 type = "toggle",
                 get = "GetStatus",
                 set = "SetStatus",
@@ -579,6 +603,7 @@ function Conceal:ShowCombatElements()
 
     if self.db.profile["selfFrame"] and not self.db.profile["selfFrameConcealDuringCombat"] then Conceal:FadeIn(PlayerFrame); Conceal:FadeIn(PetFrame) end
     if self.db.profile["targetFrame"] and not self.db.profile["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
+    if self.db.profile["focusFrame"] and not self.db.profile["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
     BuffFrame:SetAlpha(1)
     DebuffFrame:SetAlpha(1)
     -- Action Bar 1
@@ -633,6 +658,13 @@ function Conceal:ShowMouseOverElements()
             Conceal:FadeIn(DebuffFrame)
         end
     end
+
+    if self.db.profile["focusFrame"] then
+        if FocusFrame:IsMouseOver() then
+            Conceal:FadeIn(FocusFrame)
+        end
+    end
+
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"]
     if isActionBar1Concealable then
@@ -735,6 +767,7 @@ function Conceal:HideElements()
     if self.db.profile["targetFrame"] and not TargetFrame:IsMouseOver() then Conceal:FadeOut(TargetFrame); end
     if self.db.profile["buffFrame"] and not BuffFrame:IsMouseOver() then Conceal:FadeOut(BuffFrame); end
     if self.db.profile["debuffFrame"] and not DebuffFrame:IsMouseOver() then Conceal:FadeOut(DebuffFrame); end
+    if self.db.profile["focusFrame"] and not FocusFrame:IsMouseOver() then Conceal:FadeOut(FocusFrame); end
 
     -- Action Bar 1
     local isActionBar1Concealable = self.db.profile["actionBar1"]
@@ -819,6 +852,7 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if self.db.profile["targetFrame"] then TargetFrame:SetAlpha(alpha); end
     if self.db.profile["buffFrame"] then BuffFrame:SetAlpha(alpha); end
     if self.db.profile["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
+    if self.db.profile["focusFrame"] then FocusFrame:SetAlpha(alpha); end
     if self.db.profile["actionBar1"] then ActionBar1:SetAlpha(alpha) end
     if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(alpha); end
     if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(alpha); end
@@ -846,6 +880,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); self.db.profile["targetFrameConcealDuringCombat"] = false end
         if info[#info] == "buffFrame" then BuffFrame:SetAlpha(1); end
         if info[#info] == "debuffFrame" then DebuffFrame:SetAlpha(1); end
+        if info[#info] == "focusFrame" then ActionBar1:SetAlpha(1); self.db.profile["focusFrameConcealDuringCombat"] = false; end
         if info[#info] == "actionBar1" then ActionBar1:SetAlpha(1); self.db.profile["actionBar1ConcealDuringCombat"] = false; end
         if info[#info] == "actionBar2" then ActionBar2:SetAlpha(1); self.db.profile["actionBar2ConcealDuringCombat"] = false end
         if info[#info] == "actionBar3" then ActionBar3:SetAlpha(1); self.db.profile["actionBar3ConcealDuringCombat"] = false end
@@ -862,6 +897,7 @@ function Conceal:SetStatus(info)
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
         if info[#info] == "targetFrameConcealDuringCombat" then self.db.profile["targetFrame"] = true end
+        if info[#info] == "focusFrameConcealDuringCombat" then self.db.profile["focusFrame"] = true end
         if info[#info] == "actionBar1ConcealDuringCombat" then self.db.profile["actionBar1"] = true end
         if info[#info] == "actionBar2ConcealDuringCombat" then self.db.profile["actionBar2"] = true end
         if info[#info] == "actionBar3ConcealDuringCombat" then self.db.profile["actionBar3"] = true end
