@@ -39,8 +39,8 @@ local defaults = {
         targetFrameConcealDuringCombat = false,
         microBar = false,
         microBarConcealDuringCombat = false,
-        minimap = false,
-        minimapConcealDuringCombat = false,
+        -- minimap = false,
+        -- minimapConcealDuringCombat = false,
         experience = false,
         experienceConcealDuringCombat = false,
         focusFrame = false,
@@ -407,11 +407,11 @@ local options = {
             -- Other Bar Options
             OtherBarsHeader = {
                 order = 13,
-                name = "Other Bars",
+                name = "Other Elements",
                 type = "header",              
             },
             petActionBar = {
-                order = 13.1,
+                order = 13.01,
                 name = "Conceal Pet Action Bar",
                 desc = "Hides the action bar using the defined Alpha.",
                 type = "toggle",
@@ -421,7 +421,7 @@ local options = {
                 disabled = false,
             },
             petActionBarConcealDuringCombat = {
-                order = 13.2,
+                order = 13.02,
                 name = "Conceal Pet Action Bar During Combat",
                 desc = "Conceal Pet Action Bar during combat, and low HP.",
                 type = "toggle",
@@ -431,7 +431,7 @@ local options = {
                 disabled = false,
             },
             stanceBar = {
-                order = 13.3,
+                order = 13.03,
                 name = "Conceal Stance Bar",
                 desc = "Hides the stance bar using the defined Alpha.",
                 type = "toggle",
@@ -441,7 +441,7 @@ local options = {
                 disabled = false,
             },
             stanceBarConcealDuringCombat = {
-                order = 13.4,
+                order = 13.04,
                 name = "Conceal Stance Bar During Combat",
                 desc = "Conceal Stance Bar during combat, and low HP.",
                 type = "toggle",
@@ -451,7 +451,7 @@ local options = {
                 disabled = false,
             },
             microBar = {
-                order = 13.5,
+                order = 13.05,
                 name = "Conceal MicroBar and Bags",
                 desc = "Hides the MicroBar and Bags bar using the defined Alpha.",
                 type = "toggle",
@@ -461,7 +461,7 @@ local options = {
                 disabled = false,
             },
             microBarConcealDuringCombat = {
-                order = 13.6,
+                order = 13.06,
                 name = "Conceal MicroBar and Bags During Combat",
                 desc = "Conceal MicroBar and Bags during combat, and low HP.",
                 type = "toggle",
@@ -471,7 +471,7 @@ local options = {
                 disabled = false,
             },
             -- minimap = {
-            --     order = 13.7,
+            --     order = 13.07,
             --     name = "Conceal Minimap",
             --     desc = "Hides the Minimap using the defined Alpha.",
             --     type = "toggle",
@@ -481,7 +481,7 @@ local options = {
             --     disabled = false,
             -- },
             -- minimapConcealDuringCombat = {
-            --     order = 13.8,
+            --     order = 13.08,
             --     name = "Conceal Minimap During Combat",
             --     desc = "Conceal Minimap during combat, and low HP.",
             --     type = "toggle",
@@ -491,7 +491,7 @@ local options = {
             --     disabled = false,
             -- },
             experience = {
-                order = 13.7,
+                order = 13.09,
                 name = "Conceal Experience and Rep Bars",
                 desc = "Hides the Experience and Reputation Bars using the defined Alpha.",
                 type = "toggle",
@@ -501,7 +501,7 @@ local options = {
                 disabled = false,
             },
             experienceConcealDuringCombat = {
-                order = 13.8,
+                order = 13.10,
                 name = "Conceal Experience and Reputation Bar During Combat",
                 desc = "Conceal Experience and Reputation Bar during combat, and low HP.",
                 type = "toggle",
@@ -574,9 +574,7 @@ function Conceal:FadeIn(frame, forced)
     
     local currentAlpha = frame:GetAlpha()
     currentAlpha = tonumber(string.format("%.2f", currentAlpha))
-    if frame == MinimapCluster then
-        print("MinimapCluster")
-    elseif (currentAlpha == frameAlpha) and not forced then 
+    if (currentAlpha == frameAlpha) and not forced then 
     
         local animation = frame:CreateAnimationGroup();
         local fadeIn = animation:CreateAnimation("Alpha");
@@ -594,6 +592,7 @@ function Conceal:FadeIn(frame, forced)
 end
 
 function Conceal:FadeOut(frame, forced)
+    if frame == nil then return end
     local alphaTimer = self.db.profile["fadeOutDuration"];
     if alphaTimer == 0 then alphaTimer = 0.01; end
     local frameAlpha = self.db.profile["alpha"];
@@ -641,9 +640,13 @@ function Conceal:ShowCombatElements()
     if self.db.profile["petActionBar"] and not self.db.profile["petActionBarConcealDuringCombat"] then PetActionBar:SetAlpha(1) end
 
     -- Stance Bar
-    if self.db.profile["stanceBar"] and not self.db.profile["stanceBarConcealDuringCombat"]  then StanceBar:SetAlpha(1) end
-    if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"]  then MicroButtonAndBagsBar:SetAlpha(1) end
-    if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"]  then StatusTrackingBarManager:SetAlpha(1) end
+    if self.db.profile["stanceBar"] and not self.db.profile["stanceBarConcealDuringCombat"] then StanceBar:SetAlpha(1) end
+    if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"] then MicroButtonAndBagsBar:SetAlpha(1) end
+    if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"] then StatusTrackingBarManager:SetAlpha(1) end
+    -- if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"] then 
+    --     MinimapCluster:SetAlpha(1);
+    --     MinimapCluster["Minimap"]:SetAlpha(1);
+    -- end
 end
 
 function Conceal:ShowMouseOverElements()
@@ -756,29 +759,36 @@ function Conceal:ShowMouseOverElements()
             Conceal:FadeOut(PetActionBar)
         end 
     end
-    if self.db.profile["stanceBar"]  then 
+    if self.db.profile["stanceBar"] then 
         if StanceBar:IsMouseOver() then 
             Conceal:FadeIn(StanceBar)
         elseif self.db.profile["stanceBarConcealDuringCombat"] then 
             Conceal:FadeOut(StanceBar)
         end 
     end
-    if self.db.profile["microBar"]  then 
+    if self.db.profile["microBar"] then 
         if MicroButtonAndBagsBar:IsMouseOver() then 
             Conceal:FadeIn(MicroButtonAndBagsBar)
         elseif self.db.profile["microBarConcealDuringCombat"] then 
             Conceal:FadeOut(MicroButtonAndBagsBar)
         end 
     end
-    if self.db.profile["experience"]  then 
+    if self.db.profile["experience"] then 
         if StatusTrackingBarManager:IsMouseOver() then 
             Conceal:FadeIn(StatusTrackingBarManager)
         elseif self.db.profile["experienceConcealDuringCombat"] then 
             Conceal:FadeOut(StatusTrackingBarManager)
         end 
     end
-
-    
+    -- if self.db.profile["minimap"] then 
+    --     if MinimapCluster:IsMouseOver() then
+    --         Conceal:FadeIn(MinimapCluster);
+    --         Conceal:FadeIn(MinimapCluster["Minimap"]);
+    --     elseif self.db.profile["minimapConcealDuringCombat"] then
+    --         Conceal:FadeOut(MinimapCluster);
+    --         Conceal:FadeOut(MinimapCluster["Minimap"]);
+    --     end
+    -- end
 end
 
 function Conceal:HideElements()
@@ -820,6 +830,10 @@ function Conceal:HideElements()
     if self.db.profile["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
     if self.db.profile["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
     if self.db.profile["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
+    -- if self.db.profile["minimap"] and not MinimapCluster:IsMouseOver() then 
+    --     Conceal:FadeOut(MinimapCluster);
+    --     Conceal:FadeOut(MinimapCluster["Minimap"]);
+    -- end
 end
 
 function Conceal:TargetChanged()
@@ -896,11 +910,13 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if self.db.profile["stanceBar"] then StanceBar:SetAlpha(alpha); end
     if self.db.profile["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
     -- if self.db.profile["minimap"] then
-    --     local minimapChildren = { MinimapCluster:GetChildren() };
-    --     for _, child in ipairs(minimapChildren) do 
-    --         -- DEFAULT_CHAT_FRAME:AddMessage(child:GetName());
-    --         child:SetAlpha(alpha);
-    --     end
+    --     MinimapCluster:SetAlpha(alpha);
+    --     MinimapCluster["Minimap"]:SetAlpha(alpha);
+
+        -- local minimapChildren = { MinimapCluster:GetChildren() };
+        -- for _, child in ipairs(minimapChildren) do 
+        --     print(child:GetName());
+        -- end
     -- end
 end
 
