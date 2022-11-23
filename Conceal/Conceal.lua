@@ -490,6 +490,26 @@ local options = {
             --     width = 1.5,
             --     disabled = false,
             -- },
+            experience = {
+                order = 13.7,
+                name = "Conceal Experience and Rep Bars",
+                desc = "Hides the Experience and Reputation Bars using the defined Alpha.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
+            experienceConcealDuringCombat = {
+                order = 13.8,
+                name = "Conceal Experience and Reputation Bar During Combat",
+                desc = "Conceal Experience and Reputation Bar during combat, and low HP.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            },
     }
 }
 
@@ -623,6 +643,7 @@ function Conceal:ShowCombatElements()
     -- Stance Bar
     if self.db.profile["stanceBar"] and not self.db.profile["stanceBarConcealDuringCombat"]  then StanceBar:SetAlpha(1) end
     if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"]  then MicroButtonAndBagsBar:SetAlpha(1) end
+    if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"]  then StatusTrackingBarManager:SetAlpha(1) end
 end
 
 function Conceal:ShowMouseOverElements()
@@ -749,6 +770,15 @@ function Conceal:ShowMouseOverElements()
             Conceal:FadeOut(MicroButtonAndBagsBar)
         end 
     end
+    if self.db.profile["experience"]  then 
+        if StatusTrackingBarManager:IsMouseOver() then 
+            Conceal:FadeIn(StatusTrackingBarManager)
+        elseif self.db.profile["experienceConcealDuringCombat"] then 
+            Conceal:FadeOut(StatusTrackingBarManager)
+        end 
+    end
+
+    
 end
 
 function Conceal:HideElements()
@@ -789,6 +819,7 @@ function Conceal:HideElements()
     if self.db.profile["petActionBar"] and not PetActionBar:IsMouseOver() then Conceal:FadeOut(PetActionBar); end
     if self.db.profile["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
     if self.db.profile["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
+    if self.db.profile["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
 end
 
 function Conceal:TargetChanged()
@@ -893,6 +924,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "stanceBar" then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
         if info[#info] == "microBar" then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
         -- if info[#info] == "minimap" then ActionBar1:SetAlpha(1); self.db.profile["minimapConcealDuringCombat"] = false; end
+        if info[#info] == "experience" then StatusTrackingBarManager:SetAlpha(1); self.db.profile["experienceConcealDuringCombat"] = false end
     else 
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
@@ -910,6 +942,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "stanceBarConcealDuringCombat" then self.db.profile["stanceBar"] = true end
         if info[#info] == "microBarConcealDuringCombat" then self.db.profile["microBar"] = true end
         -- if info[#info] == "minimapConcealDuringCombat" then self.db.profile["minimap"] = true end
+        if info[#info] == "experienceConcealDuringCombat" then self.db.profile["experience"] = true end
         Conceal:loadConfig()
     end
     Conceal:RefreshGUI()
