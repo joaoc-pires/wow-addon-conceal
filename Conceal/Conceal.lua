@@ -39,8 +39,6 @@ local defaults = {
         targetFrameConcealDuringCombat = false,
         microBar = false,
         microBarConcealDuringCombat = false,
-        -- minimap = false,
-        -- minimapConcealDuringCombat = false,
         experience = false,
         experienceConcealDuringCombat = false,
         focusFrame = false,
@@ -470,26 +468,6 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
-            -- minimap = {
-            --     order = 13.07,
-            --     name = "Conceal Minimap",
-            --     desc = "Hides the Minimap using the defined Alpha.",
-            --     type = "toggle",
-            --     get = "GetStatus",
-            --     set = "SetStatus",
-            --     width = 1.5,
-            --     disabled = false,
-            -- },
-            -- minimapConcealDuringCombat = {
-            --     order = 13.08,
-            --     name = "Conceal Minimap During Combat",
-            --     desc = "Conceal Minimap during combat, and low HP.",
-            --     type = "toggle",
-            --     get = "GetStatus",
-            --     set = "SetStatus",
-            --     width = 1.5,
-            --     disabled = false,
-            -- },
             experience = {
                 order = 13.09,
                 name = "Conceal Experience and Rep Bars",
@@ -533,9 +511,6 @@ function Conceal:OnInitialize()
     -- Options
     AC:RegisterOptionsTable("Conceal_options", options) 
     self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")  
-    -- local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) 
-    -- AC:RegisterOptionsTable("Conceal_Profiles", profiles)
-    -- ACD:AddToBlizOptions("Conceal_Profiles", "Profiles", "Conceal")   
     
     Conceal:RegisterEvent("ADDON_LOADED", "loadConfig");
     Conceal:RegisterEvent("PLAYER_ENTER_COMBAT", "DidEnterCombat");
@@ -643,10 +618,6 @@ function Conceal:ShowCombatElements()
     if self.db.profile["stanceBar"] and not self.db.profile["stanceBarConcealDuringCombat"] then StanceBar:SetAlpha(1) end
     if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"] then MicroButtonAndBagsBar:SetAlpha(1) end
     if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"] then StatusTrackingBarManager:SetAlpha(1) end
-    -- if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"] then 
-    --     MinimapCluster:SetAlpha(1);
-    --     MinimapCluster["Minimap"]:SetAlpha(1);
-    -- end
 end
 
 function Conceal:ShowMouseOverElements()
@@ -780,15 +751,6 @@ function Conceal:ShowMouseOverElements()
             Conceal:FadeOut(StatusTrackingBarManager)
         end 
     end
-    -- if self.db.profile["minimap"] then 
-    --     if MinimapCluster:IsMouseOver() then
-    --         Conceal:FadeIn(MinimapCluster);
-    --         Conceal:FadeIn(MinimapCluster["Minimap"]);
-    --     elseif self.db.profile["minimapConcealDuringCombat"] then
-    --         Conceal:FadeOut(MinimapCluster);
-    --         Conceal:FadeOut(MinimapCluster["Minimap"]);
-    --     end
-    -- end
 end
 
 function Conceal:HideElements()
@@ -830,10 +792,6 @@ function Conceal:HideElements()
     if self.db.profile["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
     if self.db.profile["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
     if self.db.profile["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
-    -- if self.db.profile["minimap"] and not MinimapCluster:IsMouseOver() then 
-    --     Conceal:FadeOut(MinimapCluster);
-    --     Conceal:FadeOut(MinimapCluster["Minimap"]);
-    -- end
 end
 
 function Conceal:TargetChanged()
@@ -909,38 +867,28 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(alpha); end
     if self.db.profile["stanceBar"] then StanceBar:SetAlpha(alpha); end
     if self.db.profile["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
-    -- if self.db.profile["minimap"] then
-    --     MinimapCluster:SetAlpha(alpha);
-    --     MinimapCluster["Minimap"]:SetAlpha(alpha);
-
-        -- local minimapChildren = { MinimapCluster:GetChildren() };
-        -- for _, child in ipairs(minimapChildren) do 
-        --     print(child:GetName());
-        -- end
-    -- end
 end
 
 function Conceal:SetStatus(info) 
     if self.db.profile[info[#info]] then
         self.db.profile[info[#info]] = false
-        if info[#info] == "selfFrame" then PlayerFrame:SetAlpha(1); PetFrame:SetAlpha(1); self.db.profile["selfFrameConcealDuringCombat"] = false end
+        if info[#info] == "selfFrame"   then PlayerFrame:SetAlpha(1); PetFrame:SetAlpha(1); self.db.profile["selfFrameConcealDuringCombat"] = false end
         if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); self.db.profile["targetFrameConcealDuringCombat"] = false end
-        if info[#info] == "buffFrame" then BuffFrame:SetAlpha(1); end
+        if info[#info] == "buffFrame"   then BuffFrame:SetAlpha(1); end
         if info[#info] == "debuffFrame" then DebuffFrame:SetAlpha(1); end
-        if info[#info] == "focusFrame" then ActionBar1:SetAlpha(1); self.db.profile["focusFrameConcealDuringCombat"] = false; end
-        if info[#info] == "actionBar1" then ActionBar1:SetAlpha(1); self.db.profile["actionBar1ConcealDuringCombat"] = false; end
-        if info[#info] == "actionBar2" then ActionBar2:SetAlpha(1); self.db.profile["actionBar2ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar3" then ActionBar3:SetAlpha(1); self.db.profile["actionBar3ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar4" then ActionBar4:SetAlpha(1); self.db.profile["actionBar4ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar5" then ActionBar5:SetAlpha(1); self.db.profile["actionBar5ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar6" then ActionBar6:SetAlpha(1); self.db.profile["actionBar6ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar7" then ActionBar7:SetAlpha(1); self.db.profile["actionBar7ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar8" then ActionBar8:SetAlpha(1); self.db.profile["actionBar8ConcealDuringCombat"] = false end
+        if info[#info] == "focusFrame"  then ActionBar1:SetAlpha(1); self.db.profile["focusFrameConcealDuringCombat"] = false; end
+        if info[#info] == "actionBar1"  then ActionBar1:SetAlpha(1); self.db.profile["actionBar1ConcealDuringCombat"] = false; end
+        if info[#info] == "actionBar2"  then ActionBar2:SetAlpha(1); self.db.profile["actionBar2ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar3"  then ActionBar3:SetAlpha(1); self.db.profile["actionBar3ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar4"  then ActionBar4:SetAlpha(1); self.db.profile["actionBar4ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar5"  then ActionBar5:SetAlpha(1); self.db.profile["actionBar5ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar6"  then ActionBar6:SetAlpha(1); self.db.profile["actionBar6ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar7"  then ActionBar7:SetAlpha(1); self.db.profile["actionBar7ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar8"  then ActionBar8:SetAlpha(1); self.db.profile["actionBar8ConcealDuringCombat"] = false end
         if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); self.db.profile["petActionBarConcealDuringCombat"] = false end
-        if info[#info] == "stanceBar" then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
-        if info[#info] == "microBar" then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
-        -- if info[#info] == "minimap" then ActionBar1:SetAlpha(1); self.db.profile["minimapConcealDuringCombat"] = false; end
-        if info[#info] == "experience" then StatusTrackingBarManager:SetAlpha(1); self.db.profile["experienceConcealDuringCombat"] = false end
+        if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
+        if info[#info] == "microBar"    then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
+        if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); self.db.profile["experienceConcealDuringCombat"] = false end
     else 
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
@@ -957,7 +905,6 @@ function Conceal:SetStatus(info)
         if info[#info] == "petActionBarConcealDuringCombat" then self.db.profile["petActionBar"] = true end
         if info[#info] == "stanceBarConcealDuringCombat" then self.db.profile["stanceBar"] = true end
         if info[#info] == "microBarConcealDuringCombat" then self.db.profile["microBar"] = true end
-        -- if info[#info] == "minimapConcealDuringCombat" then self.db.profile["minimap"] = true end
         if info[#info] == "experienceConcealDuringCombat" then self.db.profile["experience"] = true end
         Conceal:loadConfig()
     end
