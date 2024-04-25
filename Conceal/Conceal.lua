@@ -43,6 +43,7 @@ local defaults = {
         experienceConcealDuringCombat = false,
         focusFrame = false,
         focusFrameConcealDuringCombat = false,
+        castBar = false;
     }
 }
 
@@ -488,6 +489,16 @@ local options = {
                 width = 1.5,
                 disabled = false,
             },
+            castBar = {
+                order = 13.11,
+                name = "Conceal Castbar",
+                desc = "Hides the Castbar using the defined Alpha.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
+            }
     }
 }
 
@@ -522,7 +533,7 @@ function Conceal:OnInitialize()
     Conceal:loadConfig()
     Conceal:HideGcdFlash()
     QueueStatusButton:SetParent(UIParent);
-    C_Timer.NewTicker(0.10, function()
+    C_Timer.NewTicker(1.0, function()
         Conceal:ShowMouseOverElements()
         Conceal:RefreshGUI()
     end)
@@ -842,6 +853,8 @@ function Conceal:RefreshGUI()
     else
         Conceal:HideElements()
     end
+    if self.db.profile["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
+    else PlayerCastingBarFrame:RegisterAllEvents()  end
 end
 
 function Conceal:GetStatus(info)

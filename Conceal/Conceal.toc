@@ -1,8 +1,8 @@
-## Interface: 100100
+## Interface: 100206
 ## Title: Conceal
 ## Author: Keirmot
 ## Notes: Hide the player frame, and action bars when not in use!
-## Version: 1.5.1
+## Version: 1.6.0
 
 ## SavedVariables: ConcealDB
 
