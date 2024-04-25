@@ -533,7 +533,7 @@ function Conceal:OnInitialize()
     Conceal:loadConfig()
     Conceal:HideGcdFlash()
     QueueStatusButton:SetParent(UIParent);
-    C_Timer.NewTicker(1.0, function()
+    C_Timer.NewTicker(0.25, function()
         Conceal:ShowMouseOverElements()
         Conceal:RefreshGUI()
     end)
