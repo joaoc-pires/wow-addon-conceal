@@ -44,6 +44,7 @@ local defaults = {
         focusFrame = false,
         focusFrameConcealDuringCombat = false,
         castBar = false;
+        objectiveTracker = false;
     }
 }
 
@@ -498,6 +499,16 @@ local options = {
                 set = "SetStatus",
                 width = 1.5,
                 disabled = false,
+            },
+            objectiveTracker = {
+                order = 13.12,
+                name = "Conceal Objective Tracker",
+                desc = "Hides the Objective Tracker (Quests) using the defined Alpha.",
+                type = "toggle",
+                get = "GetStatus",
+                set = "SetStatus",
+                width = 1.5,
+                disabled = false,
             }
     }
 }
@@ -762,6 +773,11 @@ function Conceal:ShowMouseOverElements()
             Conceal:FadeOut(StatusTrackingBarManager)
         end 
     end
+    if self.db.profile["objectiveTracker"] then
+        if ObjectiveTrackerFrame:IsMouseOver() then
+            Conceal:FadeIn(ObjectiveTrackerFrame)
+        end
+    end
 end
 
 function Conceal:HideElements()
@@ -803,6 +819,7 @@ function Conceal:HideElements()
     if self.db.profile["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
     if self.db.profile["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
     if self.db.profile["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
+    if self.db.profile["objectiveTracker"] and not ObjectiveTrackerFrame:IsMouseOver() then Conceal:FadeOut(ObjectiveTrackerFrame); end
 end
 
 function Conceal:TargetChanged()
@@ -880,6 +897,7 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(alpha); end
     if self.db.profile["stanceBar"] then StanceBar:SetAlpha(alpha); end
     if self.db.profile["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
+    if self.db.profile["objectiveTracker"] then ObjectiveTrackerFrame:SetAlpha(alpha); end
 end
 
 function Conceal:SetStatus(info) 
@@ -902,6 +920,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
         if info[#info] == "microBar"    then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
         if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); self.db.profile["experienceConcealDuringCombat"] = false end
+        if info[#info] == "objectiveTracker"  then ObjectiveTrackerFrame:SetAlpha(1); self.db.profile["objectiveTracker"] = false end
     else 
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
