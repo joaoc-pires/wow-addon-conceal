@@ -556,6 +556,12 @@ function Conceal:isHealthBelowThreshold()
     if threshold then
         local hp = UnitHealth("player");
         local maxHP = UnitHealthMax("player");
+
+        -- This check is needed because in 11.0 beta, when loading into a new zone, maxHP returns 0
+        if maxHP == 0 then
+            return false
+        end
+        
         local pct = (hp / maxHP) * 100;
         return pct < threshold;
     else
@@ -920,7 +926,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
         if info[#info] == "microBar"    then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
         if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); self.db.profile["experienceConcealDuringCombat"] = false end
-        if info[#info] == "objectiveTracker"  then ObjectiveTrackerFrame:SetAlpha(1); self.db.profile["objectiveTracker"] = false end
+        if info[#info] == "objectiveTracker" then ObjectiveTrackerFrame:SetAlpha(1); self.db.profile["objectiveTracker"] = false end
     else 
         self.db.profile[info[#info]] = true
         if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
