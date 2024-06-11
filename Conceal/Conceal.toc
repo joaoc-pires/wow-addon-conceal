@@ -2,7 +2,7 @@
 ## Title: Conceal
 ## Author: Keirmot
 ## Notes: Hide the player frame, and action bars when not in use!
-## Version: 6.2.0
+## Version: 6.2.2
 
 ## SavedVariables: ConcealDB
 
