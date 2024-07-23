@@ -1,516 +1,47 @@
-Conceal = LibStub("AceAddon-3.0"):NewAddon("Conceal", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0")
-local AC = LibStub("AceConfig-3.0")
-local ACD = LibStub("AceConfigDialog-3.0")
-
+local Conceal = CreateFrame("Frame")
+local settingsDB = {}
 local defaults = {
-    profile = {
-        interactive = true,
-        health = 100,
-        power = false,
-        mouseover = true,
-        alpha = 30,
-        animationDuration = 0.25,
-        fadeOutDuration = 0.25,
-        buffFrame = false,
-        debuffFrame = false,
-        actionBar1 = true,
-        actionBar1ConcealDuringCombat = false,
-        actionBar2 = true,
-        actionBar2ConcealDuringCombat = false,
-        actionBar3 = true,
-        actionBar3ConcealDuringCombat = false,
-        actionBar4 = true,
-        actionBar4ConcealDuringCombat = false,
-        actionBar5 = true,
-        actionBar5ConcealDuringCombat = false,
-        actionBar6 = true,
-        actionBar6ConcealDuringCombat = false,
-        actionBar7 = true,
-        actionBar7ConcealDuringCombat = false,
-        actionBar8 = true,
-        actionBar8ConcealDuringCombat = false,
-        petActionBar = true,
-        petActionBarConcealDuringCombat = false,
-        stanceBar = true,
-        stanceBarConcealDuringCombat = false,
-        selfFrame = true,
-        selfFrameConcealDuringCombat = false,
-        targetFrame = false,
-        targetFrameConcealDuringCombat = false,
-        microBar = false,
-        microBarConcealDuringCombat = false,
-        experience = false,
-        experienceConcealDuringCombat = false,
-        focusFrame = false,
-        focusFrameConcealDuringCombat = false,
-        castBar = false;
-        objectiveTracker = false;
-    }
-}
-
-local options = {
-    name = "Conceal ",
-    handler = Conceal,
-    type = "group",
-    args = {
-            -- General Options
-            GeneralHeader = {
-                order = 0,
-                name = "General",
-                type = "header",              
-            },
-            alpha = {
-                order = 1,
-                name = "Opacity",
-                desc = "Opacity of the elements when concealed.",
-                width = 2,
-                type = "range",
-                get = "GetSlider",
-                set = "SetSlider",
-                min = 0,
-                max = 100,   
-                step = 5,
-                disabled = false,
-            },
-            animationDuration = {
-                order = 1.2,
-                name = "Fade In Duration",
-                desc = "Controls the duration of the fade in animation in seconds",
-                width = 2,
-                type = "range",
-                get = "GetSlider",
-                set = "SetSlider",
-                min = 0,
-                max = 2,   
-                step = 0.05,
-                disabled = false,
-            },
-            fadeOutDuration = {
-                order = 1.3,
-                name = "Fade Out Duration",
-                desc = "Controls the duration of the fade out animation in seconds",
-                width = 2,
-                type = "range",
-                get = "GetSlider",
-                set = "SetSlider",
-                min = 0,
-                max = 2,   
-                step = 0.05,
-                disabled = false,
-            },
-            health = {
-                order = 2,
-                name = "Health Treshold",
-                desc = "The treshold which will trigger the elements to show if the Health % is bellow.",
-                width = 2,
-                type = "range",
-                get = "GetSlider",
-                set = "SetSlider",
-                min = 0,
-                max = 100,   
-                step = 5,
-                disabled = false,
-            },
-            GeneralHeader = {
-                order = 3,
-                name = "Player Frames & Buffs",
-                type = "header",              
-            },
-            selfFrame = {
-                order = 3.1,
-                name = "Conceal Player Frame",
-                desc = "Hides the Player Frame using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            selfFrameConcealDuringCombat = {
-                order = 3.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Player Frame during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            targetFrame = {
-                order = 3.3,
-                name = "Conceal Target Frame",
-                desc = "Hides the Player Frame using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            targetFrameConcealDuringCombat = {
-                order = 3.4,
-                name = "Conceal During Combat",
-                desc = "Conceal Target Frame during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            buffFrame = {
-                order = 3.5,
-                name = "Conceal Buffs Frame",
-                desc = "Hides the Player's Buffs Frame using the defined Alpha. Will not be hidden during combat.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            debuffFrame = {
-                order = 3.6,
-                name = "Conceal Debuffs Frame",
-                desc = "Hides the Player's Deuffs Frame using the defined Alpha. Will not be hidden during combat.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            focusFrame = {
-                order = 3.7,
-                name = "Conceal Focus Frame",
-                desc = "Hides the Focus Frame using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            focusFrameConcealDuringCombat = {
-                order = 3.8,
-                name = "Conceal During Combat",
-                desc = "Conceal Focus Frame during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 1 Options
-            ActionBar1Header = {
-                order = 4,
-                name = "Action Bar 1",
-                type = "header",              
-            },
-            actionBar1 = {
-                order = 4.1,
-                name = "Conceal Action Bar 1",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar1ConcealDuringCombat = {
-                order = 4.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 1 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 2 Options
-            ActionBar2Header = {
-                order = 5,
-                name = "Action Bar 2",
-                type = "header",              
-            },
-            actionBar2 = {
-                order = 5.1,
-                name = "Conceal Action Bar 2",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar2ConcealDuringCombat = {
-                order = 5.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 2 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 3 Options
-            ActionBar3Header = {
-                order = 6,
-                name = "Action Bar 3",
-                type = "header",              
-            },
-            actionBar3 = {
-                order = 6.1,
-                name = "Conceal Action Bar 3",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5 ,
-                disabled = false,
-            },
-            actionBar3ConcealDuringCombat = {
-                order = 6.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 3 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 4 Options
-            ActionBar4Header = {
-                order = 7,
-                name = "Action Bar 4",
-                type = "header",              
-            },
-            actionBar4 = {
-                order = 7.1,
-                name = "Conceal Action Bar 4",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar4ConcealDuringCombat = {
-                order = 7.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 4 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 5 Options
-            ActionBar5Header = {
-                order = 8,
-                name = "Action Bar 5",
-                type = "header",              
-            },
-            actionBar5 = {
-                order = 8.1,
-                name = "Conceal Action Bar 5",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar5ConcealDuringCombat = {
-                order = 8.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 5 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 6 Options
-            ActionBar6Header = {
-                order = 9,
-                name = "Action Bar 6",
-                type = "header",              
-            },
-            actionBar6 = {
-                order = 9.1,
-                name = "Conceal Action Bar 6",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar6ConcealDuringCombat = {
-                order = 9.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 6 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 7 Options
-            ActionBar7Header = {
-                order = 10,
-                name = "Action Bar 7",
-                type = "header",              
-            },
-            actionBar7 = {
-                order = 10.1,
-                name = "Conceal Action Bar 7",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar7ConcealDuringCombat = {
-                order = 10.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 7 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Action Bar 8 Options
-            ActionBar8Header = {
-                order = 11,
-                name = "Action Bar 8",
-                type = "header",              
-            },
-            actionBar8 = {
-                order = 11.1,
-                name = "Conceal Action Bar 8",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            actionBar8ConcealDuringCombat = {
-                order = 11.2,
-                name = "Conceal During Combat",
-                desc = "Conceal Action Bar 8 during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            -- Other Bar Options
-            OtherBarsHeader = {
-                order = 13,
-                name = "Other Elements",
-                type = "header",              
-            },
-            petActionBar = {
-                order = 13.01,
-                name = "Conceal Pet Action Bar",
-                desc = "Hides the action bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            petActionBarConcealDuringCombat = {
-                order = 13.02,
-                name = "Conceal Pet Action Bar During Combat",
-                desc = "Conceal Pet Action Bar during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            stanceBar = {
-                order = 13.03,
-                name = "Conceal Stance Bar",
-                desc = "Hides the stance bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            stanceBarConcealDuringCombat = {
-                order = 13.04,
-                name = "Conceal Stance Bar During Combat",
-                desc = "Conceal Stance Bar during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            microBar = {
-                order = 13.05,
-                name = "Conceal MicroBar and Bags",
-                desc = "Hides the MicroBar and Bags bar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            microBarConcealDuringCombat = {
-                order = 13.06,
-                name = "Conceal MicroBar and Bags During Combat",
-                desc = "Conceal MicroBar and Bags during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            experience = {
-                order = 13.09,
-                name = "Conceal Experience and Rep Bars",
-                desc = "Hides the Experience and Reputation Bars using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            experienceConcealDuringCombat = {
-                order = 13.10,
-                name = "Conceal Experience and Reputation Bar During Combat",
-                desc = "Conceal Experience and Reputation Bar during combat, and low HP.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            castBar = {
-                order = 13.11,
-                name = "Conceal Castbar",
-                desc = "Hides the Castbar using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            },
-            objectiveTracker = {
-                order = 13.12,
-                name = "Conceal Objective Tracker",
-                desc = "Hides the Objective Tracker (Quests) using the defined Alpha.",
-                type = "toggle",
-                get = "GetStatus",
-                set = "SetStatus",
-                width = 1.5,
-                disabled = false,
-            }
-    }
+    interactive = true,
+    health = 100,
+    power = false,
+    mouseover = true,
+    alpha = 30,
+    animationDuration = 0.25,
+    fadeOutDuration = 0.25,
+    buffFrame = false,
+    debuffFrame = false,
+    actionBar1 = true,
+    actionBar1ConcealDuringCombat = false,
+    actionBar2 = true,
+    actionBar2ConcealDuringCombat = false,
+    actionBar3 = true,
+    actionBar3ConcealDuringCombat = false,
+    actionBar4 = true,
+    actionBar4ConcealDuringCombat = false,
+    actionBar5 = true,
+    actionBar5ConcealDuringCombat = false,
+    actionBar6 = true,
+    actionBar6ConcealDuringCombat = false,
+    actionBar7 = true,
+    actionBar7ConcealDuringCombat = false,
+    actionBar8 = true,
+    actionBar8ConcealDuringCombat = false,
+    petActionBar = true,
+    petActionBarConcealDuringCombat = false,
+    stanceBar = true,
+    stanceBarConcealDuringCombat = false,
+    selfFrame = true,
+    selfFrameConcealDuringCombat = false,
+    targetFrame = false,
+    targetFrameConcealDuringCombat = false,
+    microBar = false,
+    microBarConcealDuringCombat = false,
+    experience = false,
+    experienceConcealDuringCombat = false,
+    focusFrame = false,
+    focusFrameConcealDuringCombat = false,
+    castBar = false;
+    objectiveTracker = false;
 }
 
 local isInCombat = false
@@ -524,24 +55,275 @@ ActionBar6 = MultiBar5
 ActionBar7 = MultiBar6
 ActionBar8 = MultiBar7
 
-function Conceal:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("ConcealDB", defaults, true) 
-    self.db.RegisterCallback(self, "OnProfileChanged", "ProfileHandler")
-    self.db.RegisterCallback(self, "OnProfileCopied", "ProfileHandler")
-    self.db.RegisterCallback(self, "OnProfileReset", "ProfileHandler")
 
-    -- Options
-    AC:RegisterOptionsTable("Conceal_options", options) 
-    self.optionsFrame = ACD:AddToBlizOptions("Conceal_options", "Conceal")  
+function Conceal:UpdateUI() 
+    -- this method is used to update which parts of the addon changed when the settings were changed
+    if settingsDB["selfFrame"] then
+        Conceal:FadeIn(PlayerFrame, true) 
+        Conceal:FadeIn(PetFrame, true)
+    else
+        Conceal:FadeOut(PlayerFrame, true) 
+        Conceal:FadeOut(PetFrame, true)
+    end
+    if settingsDB["targetFrame"] then Conceal:FadeIn(TargetFrame, true) else Conceal:FadeOut(TargetFrame, true) end
+    if settingsDB["buffFrame"] then Conceal:FadeIn(BuffFrame, true) else Conceal:FadeOut(BuffFrame, true) end
+    if settingsDB["debuffFrame"] then Conceal:FadeIn(DebuffFrame, true) else Conceal:FadeOut(DebuffFrame, true) end
+
+    if settingsDB["debuffFrame"] then Conceal:FadeIn(DebuffFrame, true) else Conceal:FadeOut(DebuffFrame, true) end
+    if settingsDB["debuffFrame"] then Conceal:FadeIn(DebuffFrame, true) else Conceal:FadeOut(DebuffFrame, true) end
+
+    if settingsDB["actionBar1"] then Conceal:FadeIn(ActionBar1, true) else Conceal:FadeOut(ActionBar1, true) end
+    if settingsDB["actionBar2"] then Conceal:FadeIn(ActionBar2, true) else Conceal:FadeOut(ActionBar2, true) end
+    if settingsDB["actionBar3"] then Conceal:FadeIn(ActionBar3, true) else Conceal:FadeOut(ActionBar3, true) end
+    if settingsDB["actionBar4"] then Conceal:FadeIn(ActionBar4, true) else Conceal:FadeOut(ActionBar4, true) end
+    if settingsDB["actionBar5"] then Conceal:FadeIn(ActionBar5, true) else Conceal:FadeOut(ActionBar5, true) end
+    if settingsDB["actionBar6"] then Conceal:FadeIn(ActionBar6, true) else Conceal:FadeOut(ActionBar6, true) end
+    if settingsDB["actionBar7"] then Conceal:FadeIn(ActionBar7, true) else Conceal:FadeOut(ActionBar7, true) end
+    if settingsDB["actionBar8"] then Conceal:FadeIn(ActionBar8, true) else Conceal:FadeOut(ActionBar8, true) end
+
+    Conceal:RefreshGUI()
+end
+
+function Conceal:SetupSubCategoryCheckbox(variable, name, tooltip, defaultValue, subCategory)
+	local setting = Settings.RegisterAddOnSetting(subCategory, name, variable, type(defaultValue), defaultValue)
+    local initializer = Settings.CreateCheckbox(subCategory, setting, tooltip)
+	Settings.SetOnValueChangedCallback(variable, function() 
+		settingsDB[variable] = setting:GetValue()
+        Conceal:UpdateUI()
+	end) 
+    return setting, initializer;
+end
+
+function Conceal:CreateSettingsWindow()
+	-- Adds the main Category
+	local concealOptions, concealLayout = Settings.RegisterVerticalLayoutCategory("Conceal")
+	concealOptions.ID = "Conceal"
+	Settings.RegisterAddOnCategory(concealOptions)
+	do
+		local variable = "Opacity"
+		local name = "Opacity"
+		local tooltip = "Conceal Opacity"
+		local defaultValue = settingsDB["alpha"]
+		local minValue = 0
+		local maxValue = 100
+		local step = 5
+	
+		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
+		Settings.CreateSlider(concealOptions, setting, options, tooltip)
+		Settings.SetOnValueChangedCallback(variable, function() 
+            local frameAlpha = setting:GetValue();
+			settingsDB["alpha"] = frameAlpha
+            if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
+            -- This is to prevent frame drops
+            if frameAlpha == 1 then frameAlpha = 0.99 end
+			Conceal:UpdateFramesToAlpha(frameAlpha)
+		end) 
+	end
+	do
+		local variable = "FadeIn"
+		local name = "Fade In duration"
+		local tooltip = "Controls the animations duration for the fade in"
+		local defaultValue = settingsDB["animationDuration"]
+		local minValue = 0
+		local maxValue = 2
+		local step = 0.25
+	
+		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
+		Settings.CreateSlider(concealOptions, setting, options, tooltip)
+		Settings.SetOnValueChangedCallback(variable, function() 
+			settingsDB["animationDuration"] = setting:GetValue()
+		end) 
+	end
+	do
+		local variable = "FadeOut"
+		local name = "Fade Out duration"
+		local tooltip = "Controls the animations duration for the fade out"
+		local defaultValue = settingsDB["fadeOutDuration"]
+		local minValue = 0
+		local maxValue = 2
+		local step = 0.25
+	
+		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
+		Settings.CreateSlider(concealOptions, setting, options, tooltip)
+		Settings.SetOnValueChangedCallback(variable, function() 
+			settingsDB["fadeOutDuration"] = setting:GetValue()
+		end) 
+	end
+	do
+		local variable = "HealthThreshold"
+		local name = "Health Threshold"
+		local tooltip = "Controls the threshold which will trigger Conceal to show affected elements"
+		local defaultValue = settingsDB["health"]
+		local minValue = 0
+		local maxValue = 100
+		local step = 1
+	
+		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
+		Settings.CreateSlider(concealOptions, setting, options, tooltip)
+		Settings.SetOnValueChangedCallback(variable, function() 
+			settingsDB["health"] = setting:GetValue()
+		end) 
+	end
+    	
+    -- Adds Frames sub Category
+	local framesCategory, framesLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Combat Elements");
+	Settings.RegisterAddOnCategory(framesCategory)
+	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Player Frames", ""));
+	
+    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("selfFrame","Enable Player frame","Conceal Player frame", settingsDB["selfFrame"], framesCategory)
+	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("selfFrameConcealDuringCombat","Hide Player frame in combat","Only shows the player frame when the mouse is hovering", settingsDB["selfFrameConcealDuringCombat"], framesCategory)
+	local function canSetFrameInCombat()
+        return settingsDB["selfFrame"]
+    end
+    selfFrameCombatInitializer:Indent()
+    selfFrameCombatInitializer:SetParentInitializer(selfFrameInitializer, canSetFrameInCombat)
+
+    local targetFrameSetting, targetFrameInitializer = Conceal:SetupSubCategoryCheckbox("targetFrame","Enable Target frame","Conceal Target frame", settingsDB["targetFrame"], framesCategory)
+	local targetFrameCombatSetting, targetFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("targetFrameConcealDuringCombat","Hide Target frame in combat","Only shows the target frame when the mouse is hovering", settingsDB["targetFrameConcealDuringCombat"], framesCategory)
+    local function canSetTargetInCombat()
+        return settingsDB["targetFrame"]
+    end
+    targetFrameCombatInitializer:Indent()
+    targetFrameCombatInitializer:SetParentInitializer(targetFrameInitializer, canSetTargetInCombat)
     
-    Conceal:RegisterEvent("ADDON_LOADED", "loadConfig");
-    Conceal:RegisterEvent("PLAYER_ENTER_COMBAT", "DidEnterCombat");
-    Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT", "DidExitCombat");
-    Conceal:RegisterEvent("PLAYER_REGEN_DISABLED", "DidEnterCombat");
-    Conceal:RegisterEvent("PLAYER_REGEN_ENABLED", "DidExitCombat");
-    Conceal:RegisterEvent("PLAYER_TARGET_CHANGED", "TargetChanged");
+    Conceal:SetupSubCategoryCheckbox("buffFrame","Enable Buff List","Conceal Buffs", settingsDB["buffFrame"], framesCategory)
+	Conceal:SetupSubCategoryCheckbox("debuffFrame","Debuff List","Conceal Debuffs", settingsDB["debuffFrame"], framesCategory)
 
-    Conceal:loadConfig()
+	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Cast Bar", "Selecting this option will ALWAYS hide your cast bar"));
+	Conceal:SetupSubCategoryCheckbox("castBar","Cast Bar","Completly hides the Cast Bar", 	settingsDB["castBar"], framesCategory)
+
+    -- Adds Action Bars sub Category
+	local barsCategory, barLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Action Bars");
+	Settings.RegisterAddOnCategory(barsCategory)
+	barLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Main Action Bars", "Action Bars from 1 to 3"));
+    local actionBar1Setting, actionBar1Initializer = Conceal:SetupSubCategoryCheckbox("actionBar1","Enable on Action Bar 1","Conceal Action Bar 1", settingsDB["actionBar1"], barsCategory)
+	local actionBar1CombatSetting, actionBar1CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar1ConcealDuringCombat","Hide Action Bar 1 in combat","Only shows the Action Bar 1 when the mouse is hovering", settingsDB["actionBar1ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar1InCombat()
+        return settingsDB["actionBar1"]
+    end
+    actionBar1CombatInitializer:Indent()
+    actionBar1CombatInitializer:SetParentInitializer(actionBar1Initializer, canSetActionBar1InCombat)
+
+    local actionBar2Setting, actionBar2Initializer = Conceal:SetupSubCategoryCheckbox("actionBar2","Enable on Action Bar 2","Conceal Action Bar 2", settingsDB["actionBar2"], barsCategory)
+	local actionBar2CombatSetting, actionBar2CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar2ConcealDuringCombat","Hide Action Bar 2 in combat","Only shows the Action Bar 2 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar2InCombat()
+        return settingsDB["actionBar2"]
+    end
+    actionBar2CombatInitializer:Indent()
+    actionBar2CombatInitializer:SetParentInitializer(actionBar2Initializer, canSetActionBar2InCombat)
+
+    local actionBar3Setting, actionBar3Initializer = Conceal:SetupSubCategoryCheckbox("actionBar3","Enable on Action Bar 3","Conceal Action Bar 3", settingsDB["actionBar3"], barsCategory)
+	local actionBar3CombatSetting, actionBar3CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar3ConcealDuringCombat","Hide Action Bar 3 in combat","Only shows the Action Bar 3 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar3InCombat()
+        return settingsDB["actionBar3"]
+    end
+    actionBar3CombatInitializer:Indent()
+    actionBar3CombatInitializer:SetParentInitializer(actionBar3Initializer, canSetActionBar3InCombat)
+
+	barLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Extra Action Bars", "Action Bars from 4 to 8"));
+    local actionBar4Setting, actionBar4Initializer = Conceal:SetupSubCategoryCheckbox("actionBar4","Enable on Action Bar 4","Conceal Action Bar 4", settingsDB["actionBar4"], barsCategory)
+	local actionBar4CombatSetting, actionBar4CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar4ConcealDuringCombat","Hide Action Bar 4 in combat","Only shows the Action Bar 4 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar4InCombat()
+        return settingsDB["actionBar4"]
+    end
+    actionBar4CombatInitializer:Indent()
+    actionBar4CombatInitializer:SetParentInitializer(actionBar4Initializer, canSetActionBar4InCombat)
+
+    local actionBar5Setting, actionBar5Initializer = Conceal:SetupSubCategoryCheckbox("actionBar5","Enable on Action Bar 5","Conceal Action Bar 5", settingsDB["actionBar5"], barsCategory)
+    local actionBar5CombatSetting, actionBar5CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar5ConcealDuringCombat","Hide Action Bar 5 in combat","Only shows the Action Bar 5 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+    local function canSetActionBar5InCombat()
+        return settingsDB["actionBar5"]
+    end
+    actionBar5CombatInitializer:Indent()
+    actionBar5CombatInitializer:SetParentInitializer(actionBar5Initializer, canSetActionBar5InCombat)
+    
+    local actionBar6Setting, actionBar6Initializer = Conceal:SetupSubCategoryCheckbox("actionBar6","Enable on Action Bar 6","Conceal Action Bar 6", settingsDB["actionBar6"], barsCategory)
+	local actionBar6CombatSetting, actionBar6CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar6ConcealDuringCombat","Hide Action Bar 6 in combat","Only shows the Action Bar 6 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar6InCombat()
+        return settingsDB["actionBar6"]
+    end
+    actionBar6CombatInitializer:Indent()
+    actionBar6CombatInitializer:SetParentInitializer(actionBar6Initializer, canSetActionBar6InCombat)
+    
+    local actionBar7Setting, actionBar7Initializer = Conceal:SetupSubCategoryCheckbox("actionBar7","Enable on Action Bar 7","Conceal Action Bar 7", settingsDB["actionBar7"], barsCategory)
+	local actionBar7CombatSetting, actionBar7CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar7ConcealDuringCombat","Hide Action Bar 7 in combat","Only shows the Action Bar 7 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar7InCombat()
+        return settingsDB["actionBar7"]
+    end
+    actionBar7CombatInitializer:Indent()
+    actionBar7CombatInitializer:SetParentInitializer(actionBar7Initializer, canSetActionBar7InCombat)
+    
+    local actionBar8Setting, actionBar8Initializer = Conceal:SetupSubCategoryCheckbox("actionBar8","Enable on Action Bar 8","Conceal Action Bar 8", settingsDB["actionBar8"], barsCategory)
+	local actionBar8CombatSetting, actionBar8CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar8ConcealDuringCombat","Hide Action Bar 8 in combat","Only shows the Action Bar 8 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local function canSetActionBar8InCombat()
+        return settingsDB["actionBar8"]
+    end
+    actionBar8CombatInitializer:Indent()
+    actionBar8CombatInitializer:SetParentInitializer(actionBar8Initializer, canSetActionBar8InCombat)
+
+    -- Adds Extra Elements Category
+	local extraCategory, extraLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Extra Elements");
+	Settings.RegisterAddOnCategory(extraCategory)
+    	
+    local petActionBarSetting, petActionBarInitializer = Conceal:SetupSubCategoryCheckbox("petActionBar","Enable Pet Action Bar","Conceal Pet Action Bar", settingsDB["petActionBar"], extraCategory)
+	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("petActionBarConcealDuringCombat","Hide Pet Action Bar in combat","Only shows the pet action bar when the mouse is hovering", settingsDB["petActionBarConcealDuringCombat"], extraCategory)
+	local function canSetPetActionBarInCombat()
+        return settingsDB["petActionBar"]
+    end
+    selfFrameCombatInitializer:Indent()
+    selfFrameCombatInitializer:SetParentInitializer(petActionBarInitializer, canSetPetActionBarInCombat)
+
+    local stanceBarSetting, stanceBarInitializer = Conceal:SetupSubCategoryCheckbox("stanceBar","Enable Stance Action Bar","Conceal Stance Action Bar", settingsDB["stanceBar"], extraCategory)
+	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("stanceBarConcealDuringCombat","Hide Stance Action Bar in combat","Only shows the stance action bar when the mouse is hovering", settingsDB["stanceBarConcealDuringCombat"], extraCategory)
+	local function canSetstanceBarInCombat()
+        return settingsDB["stanceBar"]
+    end
+    selfFrameCombatInitializer:Indent()
+    selfFrameCombatInitializer:SetParentInitializer(stanceBarInitializer, canSetstanceBarInCombat)
+
+    local microBarSetting, microBarInitializer = Conceal:SetupSubCategoryCheckbox("microBar","Enable Micro Bar","Conceal Micro Bar", settingsDB["microBar"], extraCategory)
+	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("microBarConcealDuringCombat","Hide Micro Bar in combat","Only shows the micro bar when the mouse is hovering", settingsDB["microBarConcealDuringCombat"], extraCategory)
+	local function canSetmicroBarInCombat()
+        return settingsDB["microBar"]
+    end
+    selfFrameCombatInitializer:Indent()
+    selfFrameCombatInitializer:SetParentInitializer(microBarInitializer, canSetmicroBarInCombat)
+
+    
+    local experienceSetting, experienceInitializer = Conceal:SetupSubCategoryCheckbox("experience","Enable Experience Bar","Conceal Experience Bar", settingsDB["experience"], extraCategory)
+	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("experienceConcealDuringCombat","Hide Experience Bar in combat","Only shows the experience bar when the mouse is hovering", settingsDB["experienceConcealDuringCombat"], extraCategory)
+	local function canSetexperienceInCombat()
+        return settingsDB["experience"]
+    end
+    selfFrameCombatInitializer:Indent()
+    selfFrameCombatInitializer:SetParentInitializer(experienceInitializer, canSetexperienceInCombat)
+    
+    local objectiveTrackerSetting, objectiveTrackerInitializer = Conceal:SetupSubCategoryCheckbox("objectiveTracker","Enable Objective Tracker","Conceal Objective Tracker", settingsDB["objectiveTracker"], extraCategory)
+end
+
+
+function Conceal:OnInitialize() 
+    local savedSettingsDB = ConcealDB
+    print(savedSettingsDB)
+    if not savedSettingsDB then 
+        print("Database is empty")
+        settingsDB = defaults
+        ConcealDB = defaults
+    else 
+        print("Database is not empty")
+        settingsDB = savedSettingsDB
+    end 
+    print(settingsDB)
+
+    Conceal:CreateSettingsWindow()
     Conceal:HideGcdFlash()
     QueueStatusButton:SetParent(UIParent);
     C_Timer.NewTicker(0.25, function()
@@ -552,7 +334,7 @@ end
 
 -- Conditionals
 function Conceal:isHealthBelowThreshold()
-    local threshold = self.db.profile["health"];
+    local threshold = settingsDB["health"];
     if threshold then
         local hp = UnitHealth("player");
         local maxHP = UnitHealthMax("player");
@@ -570,9 +352,9 @@ function Conceal:isHealthBelowThreshold()
 end
 
 function Conceal:FadeIn(frame, forced)
-    local alphaTimer = self.db.profile["animationDuration"];
+    local alphaTimer = settingsDB["animationDuration"];
     if alphaTimer == 0 then alphaTimer = 0.01; end
-    local frameAlpha = self.db.profile["alpha"];
+    local frameAlpha = settingsDB["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
     
     local currentAlpha = frame:GetAlpha()
@@ -596,9 +378,9 @@ end
 
 function Conceal:FadeOut(frame, forced)
     if frame == nil then return end
-    local alphaTimer = self.db.profile["fadeOutDuration"];
+    local alphaTimer = settingsDB["fadeOutDuration"];
     if alphaTimer == 0 then alphaTimer = 0.01; end
-    local frameAlpha = self.db.profile["alpha"];
+    local frameAlpha = settingsDB["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
     local currentAlpha = frame:GetAlpha()
@@ -623,73 +405,73 @@ end
 -- Actions
 function Conceal:ShowCombatElements()
 
-    if self.db.profile["selfFrame"] and not self.db.profile["selfFrameConcealDuringCombat"] then Conceal:FadeIn(PlayerFrame); Conceal:FadeIn(PetFrame) end
-    if self.db.profile["targetFrame"] and not self.db.profile["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
-    if self.db.profile["focusFrame"] and not self.db.profile["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
+    if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then Conceal:FadeIn(PlayerFrame); Conceal:FadeIn(PetFrame) end
+    if settingsDB["targetFrame"] and not settingsDB["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
+    if settingsDB["focusFrame"] and not settingsDB["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
     BuffFrame:SetAlpha(1)
     DebuffFrame:SetAlpha(1)
     -- Action Bar 1
-    local isActionBar1Concealable = self.db.profile["actionBar1"] 
-    local concealActionBar1InCombat = self.db.profile["actionBar1ConcealDuringCombat"] 
+    local isActionBar1Concealable = settingsDB["actionBar1"] 
+    local concealActionBar1InCombat = settingsDB["actionBar1ConcealDuringCombat"] 
     if isActionBar1Concealable and not concealActionBar1InCombat then ActionBar1:SetAlpha(1) end
 
-    if self.db.profile["actionBar2"] and not self.db.profile["actionBar2ConcealDuringCombat"] then ActionBar2:SetAlpha(1) end
-    if self.db.profile["actionBar3"] and not self.db.profile["actionBar3ConcealDuringCombat"] then ActionBar3:SetAlpha(1) end
-    if self.db.profile["actionBar4"] and not self.db.profile["actionBar4ConcealDuringCombat"] then ActionBar4:SetAlpha(1) end
-    if self.db.profile["actionBar5"] and not self.db.profile["actionBar5ConcealDuringCombat"] then ActionBar5:SetAlpha(1) end
-    if self.db.profile["actionBar6"] and not self.db.profile["actionBar6ConcealDuringCombat"] then ActionBar6:SetAlpha(1) end
-    if self.db.profile["actionBar7"] and not self.db.profile["actionBar7ConcealDuringCombat"] then ActionBar7:SetAlpha(1) end
-    if self.db.profile["actionBar8"] and not self.db.profile["actionBar8ConcealDuringCombat"] then ActionBar8:SetAlpha(1) end
-    if self.db.profile["petActionBar"] and not self.db.profile["petActionBarConcealDuringCombat"] then PetActionBar:SetAlpha(1) end
+    if settingsDB["actionBar2"] and not settingsDB["actionBar2ConcealDuringCombat"] then ActionBar2:SetAlpha(1) end
+    if settingsDB["actionBar3"] and not settingsDB["actionBar3ConcealDuringCombat"] then ActionBar3:SetAlpha(1) end
+    if settingsDB["actionBar4"] and not settingsDB["actionBar4ConcealDuringCombat"] then ActionBar4:SetAlpha(1) end
+    if settingsDB["actionBar5"] and not settingsDB["actionBar5ConcealDuringCombat"] then ActionBar5:SetAlpha(1) end
+    if settingsDB["actionBar6"] and not settingsDB["actionBar6ConcealDuringCombat"] then ActionBar6:SetAlpha(1) end
+    if settingsDB["actionBar7"] and not settingsDB["actionBar7ConcealDuringCombat"] then ActionBar7:SetAlpha(1) end
+    if settingsDB["actionBar8"] and not settingsDB["actionBar8ConcealDuringCombat"] then ActionBar8:SetAlpha(1) end
+    if settingsDB["petActionBar"] and not settingsDB["petActionBarConcealDuringCombat"] then PetActionBar:SetAlpha(1) end
 
     -- Stance Bar
-    if self.db.profile["stanceBar"] and not self.db.profile["stanceBarConcealDuringCombat"] then StanceBar:SetAlpha(1) end
-    if self.db.profile["microBar"] and not self.db.profile["microBarConcealDuringCombat"] then MicroButtonAndBagsBar:SetAlpha(1) end
-    if self.db.profile["experience"] and not self.db.profile["experienceConcealDuringCombat"] then StatusTrackingBarManager:SetAlpha(1) end
+    if settingsDB["stanceBar"] and not settingsDB["stanceBarConcealDuringCombat"] then StanceBar:SetAlpha(1) end
+    if settingsDB["microBar"] and not settingsDB["microBarConcealDuringCombat"] then MicroButtonAndBagsBar:SetAlpha(1) end
+    if settingsDB["experience"] and not settingsDB["experienceConcealDuringCombat"] then StatusTrackingBarManager:SetAlpha(1) end
 end
 
 function Conceal:ShowMouseOverElements()
-    local frameAlpha = self.db.profile["alpha"];
+    local frameAlpha = settingsDB["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
-    if self.db.profile["selfFrame"] then 
+    if settingsDB["selfFrame"] then 
         if PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() then 
             Conceal:FadeIn(PlayerFrame)
             Conceal:FadeIn(PetFrame)
-        elseif self.db.profile["selfFrameConcealDuringCombat"] then 
+        elseif settingsDB["selfFrameConcealDuringCombat"] then 
             Conceal:FadeOut(PlayerFrame)
             Conceal:FadeOut(PetFrame)
         end 
     end
 
-    if self.db.profile["targetFrame"] then 
+    if settingsDB["targetFrame"] then 
         if TargetFrame:IsMouseOver() then 
             Conceal:FadeIn(TargetFrame)
-        elseif self.db.profile["targetFrameConcealDuringCombat"] then 
+        elseif settingsDB["targetFrameConcealDuringCombat"] then 
             Conceal:FadeOut(TargetFrame)
         end 
     end
 
-    if self.db.profile["buffFrame"] then
+    if settingsDB["buffFrame"] then
         if BuffFrame:IsMouseOver() then
             Conceal:FadeIn(BuffFrame)
         end
     end
 
-    if self.db.profile["debuffFrame"] then
+    if settingsDB["debuffFrame"] then
         if DebuffFrame:IsMouseOver() then
             Conceal:FadeIn(DebuffFrame)
         end
     end
 
-    if self.db.profile["focusFrame"] then
+    if settingsDB["focusFrame"] then
         if FocusFrame:IsMouseOver() then
             Conceal:FadeIn(FocusFrame)
         end
     end
 
     -- Action Bar 1
-    local isActionBar1Concealable = self.db.profile["actionBar1"]
+    local isActionBar1Concealable = settingsDB["actionBar1"]
     if isActionBar1Concealable then
         local isMouseOverActionBar1 = false
         for i=1,12 do
@@ -697,89 +479,89 @@ function Conceal:ShowMouseOverElements()
         end
         if isMouseOverActionBar1 then 
             Conceal:FadeIn(ActionBar1)
-        elseif self.db.profile["actionBar1ConcealDuringCombat"] then
+        elseif settingsDB["actionBar1ConcealDuringCombat"] then
             Conceal:FadeOut(ActionBar1)
         end
     end
 
-    if self.db.profile["actionBar2"] then 
+    if settingsDB["actionBar2"] then 
         if ActionBar2:IsMouseOver() then 
             Conceal:FadeIn(ActionBar2)
-        elseif self.db.profile["actionBar2ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar2ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar2)
         end 
     end 
-    if self.db.profile["actionBar3"] then 
+    if settingsDB["actionBar3"] then 
         if ActionBar3:IsMouseOver() then 
             Conceal:FadeIn(ActionBar3)
-        elseif self.db.profile["actionBar3ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar3ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar3)
         end 
     end
-    if self.db.profile["actionBar4"] then 
+    if settingsDB["actionBar4"] then 
         if ActionBar4:IsMouseOver() then 
             Conceal:FadeIn(ActionBar4)
-        elseif self.db.profile["actionBar4ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar4ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar4)
         end 
     end
-    if self.db.profile["actionBar5"] then 
+    if settingsDB["actionBar5"] then 
         if ActionBar5:IsMouseOver() then 
             Conceal:FadeIn(ActionBar5)
-        elseif self.db.profile["actionBar5ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar5ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar5)
         end 
     end
-    if self.db.profile["actionBar6"] then 
+    if settingsDB["actionBar6"] then 
         if ActionBar6:IsMouseOver() then 
             Conceal:FadeIn(ActionBar6)
-        elseif self.db.profile["actionBar6ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar6ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar6)
         end 
     end
-    if self.db.profile["actionBar7"] then 
+    if settingsDB["actionBar7"] then 
         if ActionBar7:IsMouseOver() then 
             Conceal:FadeIn(ActionBar7)
-        elseif self.db.profile["actionBar7ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar7ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar7)
         end 
     end
-    if self.db.profile["actionBar8"] then 
+    if settingsDB["actionBar8"] then 
         if ActionBar8:IsMouseOver() then 
             Conceal:FadeIn(ActionBar8)
-        elseif self.db.profile["actionBar8ConcealDuringCombat"] then 
+        elseif settingsDB["actionBar8ConcealDuringCombat"] then 
             Conceal:FadeOut(ActionBar8)
         end 
     end
-    if self.db.profile["petActionBar"] then 
+    if settingsDB["petActionBar"] then 
         if PetActionBar:IsMouseOver() then 
             Conceal:FadeIn(PetActionBar)
-        elseif self.db.profile["petActionBarConcealDuringCombat"] then 
+        elseif settingsDB["petActionBarConcealDuringCombat"] then 
             Conceal:FadeOut(PetActionBar)
         end 
     end
-    if self.db.profile["stanceBar"] then 
+    if settingsDB["stanceBar"] then 
         if StanceBar:IsMouseOver() then 
             Conceal:FadeIn(StanceBar)
-        elseif self.db.profile["stanceBarConcealDuringCombat"] then 
+        elseif settingsDB["stanceBarConcealDuringCombat"] then 
             Conceal:FadeOut(StanceBar)
         end 
     end
-    if self.db.profile["microBar"] then 
+    if settingsDB["microBar"] then 
         if MicroButtonAndBagsBar:IsMouseOver() then 
             Conceal:FadeIn(MicroButtonAndBagsBar)
-        elseif self.db.profile["microBarConcealDuringCombat"] then 
+        elseif settingsDB["microBarConcealDuringCombat"] then 
             Conceal:FadeOut(MicroButtonAndBagsBar)
         end 
     end
-    if self.db.profile["experience"] then 
+    if settingsDB["experience"] then 
         if StatusTrackingBarManager:IsMouseOver() then 
             Conceal:FadeIn(StatusTrackingBarManager)
-        elseif self.db.profile["experienceConcealDuringCombat"] then 
+        elseif settingsDB["experienceConcealDuringCombat"] then 
             Conceal:FadeOut(StatusTrackingBarManager)
         end 
     end
-    if self.db.profile["objectiveTracker"] then
+    if settingsDB["objectiveTracker"] then
         if ObjectiveTrackerFrame:IsMouseOver() then
             Conceal:FadeIn(ObjectiveTrackerFrame)
         end
@@ -790,22 +572,22 @@ function Conceal:HideElements()
 
     if isInCombat then return end
 
-    local frameAlpha = self.db.profile["alpha"];
+    local frameAlpha = settingsDB["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
     
     -- Player Frame
-    if self.db.profile["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver()) then 
+    if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver()) then 
         Conceal:FadeOut(PlayerFrame) 
         Conceal:FadeOut(PetFrame)
     end
 
-    if self.db.profile["targetFrame"] and not TargetFrame:IsMouseOver() then Conceal:FadeOut(TargetFrame); end
-    if self.db.profile["buffFrame"] and not BuffFrame:IsMouseOver() then Conceal:FadeOut(BuffFrame); end
-    if self.db.profile["debuffFrame"] and not DebuffFrame:IsMouseOver() then Conceal:FadeOut(DebuffFrame); end
-    if self.db.profile["focusFrame"] and not FocusFrame:IsMouseOver() then Conceal:FadeOut(FocusFrame); end
+    if settingsDB["targetFrame"] and not TargetFrame:IsMouseOver() then Conceal:FadeOut(TargetFrame); end
+    if settingsDB["buffFrame"] and not BuffFrame:IsMouseOver() then Conceal:FadeOut(BuffFrame); end
+    if settingsDB["debuffFrame"] and not DebuffFrame:IsMouseOver() then Conceal:FadeOut(DebuffFrame); end
+    if settingsDB["focusFrame"] and not FocusFrame:IsMouseOver() then Conceal:FadeOut(FocusFrame); end
 
     -- Action Bar 1
-    local isActionBar1Concealable = self.db.profile["actionBar1"]
+    local isActionBar1Concealable = settingsDB["actionBar1"]
     local isMouseOverActionBar1 = false
     for i=1,12 do
         if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
@@ -814,28 +596,19 @@ function Conceal:HideElements()
         Conceal:FadeOut(ActionBar1)
     end
 
-    if self.db.profile["actionBar2"] and not ActionBar2:IsMouseOver() then Conceal:FadeOut(ActionBar2); end
-    if self.db.profile["actionBar3"] and not ActionBar3:IsMouseOver() then Conceal:FadeOut(ActionBar3); end
-    if self.db.profile["actionBar4"] and not ActionBar4:IsMouseOver() then Conceal:FadeOut(ActionBar4); end
-    if self.db.profile["actionBar5"] and not ActionBar5:IsMouseOver() then Conceal:FadeOut(ActionBar5); end
-    if self.db.profile["actionBar6"] and not ActionBar6:IsMouseOver() then Conceal:FadeOut(ActionBar6); end
-    if self.db.profile["actionBar7"] and not ActionBar7:IsMouseOver() then Conceal:FadeOut(ActionBar7); end
-    if self.db.profile["actionBar8"] and not ActionBar8:IsMouseOver() then Conceal:FadeOut(ActionBar8); end
-    if self.db.profile["petActionBar"] and not PetActionBar:IsMouseOver() then Conceal:FadeOut(PetActionBar); end
-    if self.db.profile["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
-    if self.db.profile["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
-    if self.db.profile["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
-    if self.db.profile["objectiveTracker"] and not ObjectiveTrackerFrame:IsMouseOver() then Conceal:FadeOut(ObjectiveTrackerFrame); end
+    if settingsDB["actionBar2"] and not ActionBar2:IsMouseOver() then Conceal:FadeOut(ActionBar2); end
+    if settingsDB["actionBar3"] and not ActionBar3:IsMouseOver() then Conceal:FadeOut(ActionBar3); end
+    if settingsDB["actionBar4"] and not ActionBar4:IsMouseOver() then Conceal:FadeOut(ActionBar4); end
+    if settingsDB["actionBar5"] and not ActionBar5:IsMouseOver() then Conceal:FadeOut(ActionBar5); end
+    if settingsDB["actionBar6"] and not ActionBar6:IsMouseOver() then Conceal:FadeOut(ActionBar6); end
+    if settingsDB["actionBar7"] and not ActionBar7:IsMouseOver() then Conceal:FadeOut(ActionBar7); end
+    if settingsDB["actionBar8"] and not ActionBar8:IsMouseOver() then Conceal:FadeOut(ActionBar8); end
+    if settingsDB["petActionBar"] and not PetActionBar:IsMouseOver() then Conceal:FadeOut(PetActionBar); end
+    if settingsDB["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
+    if settingsDB["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
+    if settingsDB["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
+    if settingsDB["objectiveTracker"] and not ObjectiveTrackerFrame:IsMouseOver() then Conceal:FadeOut(ObjectiveTrackerFrame); end
 end
-
-function Conceal:TargetChanged()
-    if UnitExists("target") then 
-         Conceal:ShowCombatElements();
-    else
-        Conceal:HideElements()
-    end
-end
-
 
 -- Event Handlers
 function Conceal:DidEnterCombat() 
@@ -848,7 +621,29 @@ function Conceal:DidExitCombat()
     isInCombat = false
 end
 
+function Conceal:PLAYER_TARGET_CHANGED(info, value)
+    if UnitExists("target") then 
+         Conceal:ShowCombatElements();
+    else
+        Conceal:HideElements()
+    end
+end
 
+function Conceal:PLAYER_ENTER_COMBAT(info, value)
+    Conceal:DidEnterCombat()
+end
+
+function Conceal:PLAYER_REGEN_DISABLED(info, value)
+    Conceal:DidEnterCombat()
+end
+
+function Conceal:PLAYER_LEAVE_COMBAT(info, value)
+    Conceal:DidExitCombat()
+end
+
+function Conceal:PLAYER_REGEN_ENABLED(info, value)
+    Conceal:DidExitCombat()
+end
 --credit https://www.mmo-champion.com/threads/2414999-How-do-I-disable-the-GCD-flash-on-my-bars
 function Conceal:HideGcdFlash() 
     for i,v in pairs(_G) do
@@ -863,10 +658,6 @@ function Conceal:ProfileHandler()
     Conceal:RefreshGUI();
 end
 
-function Conceal:loadConfig()
-    -- Unused for now
-end
-
 function Conceal:RefreshGUI()
     local shouldShowCombatElement = false
     if UnitExists("target") then shouldShowCombatElement = shouldShowCombatElement or true; end
@@ -876,88 +667,110 @@ function Conceal:RefreshGUI()
     else
         Conceal:HideElements()
     end
-    if self.db.profile["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
+    if settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
     else PlayerCastingBarFrame:RegisterAllEvents()  end
 end
 
 function Conceal:GetStatus(info)
     Conceal:RefreshGUI()
     Conceal:loadConfig()
-    return self.db.profile[info[#info]]
+    return settingsDB[info[#info]]
 end
 
 function Conceal:UpdateFramesToAlpha(alpha)
-    if self.db.profile["selfFrame"] then PlayerFrame:SetAlpha(alpha); PetFrame:SetAlpha(alpha); end
-    if self.db.profile["targetFrame"] then TargetFrame:SetAlpha(alpha); end
-    if self.db.profile["buffFrame"] then BuffFrame:SetAlpha(alpha); end
-    if self.db.profile["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
-    if self.db.profile["focusFrame"] then FocusFrame:SetAlpha(alpha); end
-    if self.db.profile["actionBar1"] then ActionBar1:SetAlpha(alpha) end
-    if self.db.profile["actionBar2"] then ActionBar2:SetAlpha(alpha); end
-    if self.db.profile["actionBar3"] then ActionBar3:SetAlpha(alpha); end
-    if self.db.profile["actionBar4"] then ActionBar4:SetAlpha(alpha); end
-    if self.db.profile["actionBar5"] then ActionBar5:SetAlpha(alpha); end
-    if self.db.profile["actionBar6"] then ActionBar6:SetAlpha(alpha); end
-    if self.db.profile["actionBar7"] then ActionBar7:SetAlpha(alpha); end
-    if self.db.profile["actionBar8"] then ActionBar8:SetAlpha(alpha); end
-    if self.db.profile["petActionBar"] then PetActionBar:SetAlpha(alpha); end
-    if self.db.profile["stanceBar"] then StanceBar:SetAlpha(alpha); end
-    if self.db.profile["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
-    if self.db.profile["objectiveTracker"] then ObjectiveTrackerFrame:SetAlpha(alpha); end
+    if settingsDB["selfFrame"] then PlayerFrame:SetAlpha(alpha); PetFrame:SetAlpha(alpha); end
+    if settingsDB["targetFrame"] then TargetFrame:SetAlpha(alpha); end
+    if settingsDB["buffFrame"] then BuffFrame:SetAlpha(alpha); end
+    if settingsDB["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
+    if settingsDB["focusFrame"] then FocusFrame:SetAlpha(alpha); end
+    if settingsDB["actionBar1"] then ActionBar1:SetAlpha(alpha) end
+    if settingsDB["actionBar2"] then ActionBar2:SetAlpha(alpha); end
+    if settingsDB["actionBar3"] then ActionBar3:SetAlpha(alpha); end
+    if settingsDB["actionBar4"] then ActionBar4:SetAlpha(alpha); end
+    if settingsDB["actionBar5"] then ActionBar5:SetAlpha(alpha); end
+    if settingsDB["actionBar6"] then ActionBar6:SetAlpha(alpha); end
+    if settingsDB["actionBar7"] then ActionBar7:SetAlpha(alpha); end
+    if settingsDB["actionBar8"] then ActionBar8:SetAlpha(alpha); end
+    if settingsDB["petActionBar"] then PetActionBar:SetAlpha(alpha); end
+    if settingsDB["stanceBar"] then StanceBar:SetAlpha(alpha); end
+    if settingsDB["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
+    if settingsDB["objectiveTracker"] then ObjectiveTrackerFrame:SetAlpha(alpha); end
 end
 
 function Conceal:SetStatus(info) 
-    if self.db.profile[info[#info]] then
-        self.db.profile[info[#info]] = false
-        if info[#info] == "selfFrame"   then PlayerFrame:SetAlpha(1); PetFrame:SetAlpha(1); self.db.profile["selfFrameConcealDuringCombat"] = false end
-        if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); self.db.profile["targetFrameConcealDuringCombat"] = false end
+    if settingsDB[info[#info]] then
+        settingsDB[info[#info]] = false
+        if info[#info] == "selfFrame"   then PlayerFrame:SetAlpha(1); PetFrame:SetAlpha(1); settingsDB["selfFrameConcealDuringCombat"] = false end
+        if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); settingsDB["targetFrameConcealDuringCombat"] = false end
         if info[#info] == "buffFrame"   then BuffFrame:SetAlpha(1); end
         if info[#info] == "debuffFrame" then DebuffFrame:SetAlpha(1); end
-        if info[#info] == "focusFrame"  then ActionBar1:SetAlpha(1); self.db.profile["focusFrameConcealDuringCombat"] = false; end
-        if info[#info] == "actionBar1"  then ActionBar1:SetAlpha(1); self.db.profile["actionBar1ConcealDuringCombat"] = false; end
-        if info[#info] == "actionBar2"  then ActionBar2:SetAlpha(1); self.db.profile["actionBar2ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar3"  then ActionBar3:SetAlpha(1); self.db.profile["actionBar3ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar4"  then ActionBar4:SetAlpha(1); self.db.profile["actionBar4ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar5"  then ActionBar5:SetAlpha(1); self.db.profile["actionBar5ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar6"  then ActionBar6:SetAlpha(1); self.db.profile["actionBar6ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar7"  then ActionBar7:SetAlpha(1); self.db.profile["actionBar7ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar8"  then ActionBar8:SetAlpha(1); self.db.profile["actionBar8ConcealDuringCombat"] = false end
-        if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); self.db.profile["petActionBarConcealDuringCombat"] = false end
-        if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); self.db.profile["stanceBarConcealDuringCombat"] = false end
-        if info[#info] == "microBar"    then MicroButtonAndBagsBar:SetAlpha(1); self.db.profile["microBarConcealDuringCombat"] = false end
-        if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); self.db.profile["experienceConcealDuringCombat"] = false end
-        if info[#info] == "objectiveTracker" then ObjectiveTrackerFrame:SetAlpha(1); self.db.profile["objectiveTracker"] = false end
+        if info[#info] == "focusFrame"  then ActionBar1:SetAlpha(1); settingsDB["focusFrameConcealDuringCombat"] = false; end
+        if info[#info] == "actionBar1"  then ActionBar1:SetAlpha(1); settingsDB["actionBar1ConcealDuringCombat"] = false; end
+        if info[#info] == "actionBar2"  then ActionBar2:SetAlpha(1); settingsDB["actionBar2ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar3"  then ActionBar3:SetAlpha(1); settingsDB["actionBar3ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar4"  then ActionBar4:SetAlpha(1); settingsDB["actionBar4ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar5"  then ActionBar5:SetAlpha(1); settingsDB["actionBar5ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar6"  then ActionBar6:SetAlpha(1); settingsDB["actionBar6ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar7"  then ActionBar7:SetAlpha(1); settingsDB["actionBar7ConcealDuringCombat"] = false end
+        if info[#info] == "actionBar8"  then ActionBar8:SetAlpha(1); settingsDB["actionBar8ConcealDuringCombat"] = false end
+        if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); settingsDB["petActionBarConcealDuringCombat"] = false end
+        if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); settingsDB["stanceBarConcealDuringCombat"] = false end
+        if info[#info] == "microBar"    then MicroButtonAndBagsBar:SetAlpha(1); settingsDB["microBarConcealDuringCombat"] = false end
+        if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); settingsDB["experienceConcealDuringCombat"] = false end
+        if info[#info] == "objectiveTracker" then ObjectiveTrackerFrame:SetAlpha(1); settingsDB["objectiveTracker"] = false end
     else 
-        self.db.profile[info[#info]] = true
-        if info[#info] == "selfFrameConcealDuringCombat" then self.db.profile["selfFrame"] = true end
-        if info[#info] == "targetFrameConcealDuringCombat" then self.db.profile["targetFrame"] = true end
-        if info[#info] == "focusFrameConcealDuringCombat" then self.db.profile["focusFrame"] = true end
-        if info[#info] == "actionBar1ConcealDuringCombat" then self.db.profile["actionBar1"] = true end
-        if info[#info] == "actionBar2ConcealDuringCombat" then self.db.profile["actionBar2"] = true end
-        if info[#info] == "actionBar3ConcealDuringCombat" then self.db.profile["actionBar3"] = true end
-        if info[#info] == "actionBar4ConcealDuringCombat" then self.db.profile["actionBar4"] = true end
-        if info[#info] == "actionBar5ConcealDuringCombat" then self.db.profile["actionBar5"] = true end
-        if info[#info] == "actionBar6ConcealDuringCombat" then self.db.profile["actionBar6"] = true end
-        if info[#info] == "actionBar7ConcealDuringCombat" then self.db.profile["actionBar7"] = true end
-        if info[#info] == "actionBar8ConcealDuringCombat" then self.db.profile["actionBar8"] = true end
-        if info[#info] == "petActionBarConcealDuringCombat" then self.db.profile["petActionBar"] = true end
-        if info[#info] == "stanceBarConcealDuringCombat" then self.db.profile["stanceBar"] = true end
-        if info[#info] == "microBarConcealDuringCombat" then self.db.profile["microBar"] = true end
-        if info[#info] == "experienceConcealDuringCombat" then self.db.profile["experience"] = true end
+        settingsDB[info[#info]] = true
+        if info[#info] == "selfFrameConcealDuringCombat" then settingsDB["selfFrame"] = true end
+        if info[#info] == "targetFrameConcealDuringCombat" then settingsDB["targetFrame"] = true end
+        if info[#info] == "focusFrameConcealDuringCombat" then settingsDB["focusFrame"] = true end
+        if info[#info] == "actionBar1ConcealDuringCombat" then settingsDB["actionBar1"] = true end
+        if info[#info] == "actionBar2ConcealDuringCombat" then settingsDB["actionBar2"] = true end
+        if info[#info] == "actionBar3ConcealDuringCombat" then settingsDB["actionBar3"] = true end
+        if info[#info] == "actionBar4ConcealDuringCombat" then settingsDB["actionBar4"] = true end
+        if info[#info] == "actionBar5ConcealDuringCombat" then settingsDB["actionBar5"] = true end
+        if info[#info] == "actionBar6ConcealDuringCombat" then settingsDB["actionBar6"] = true end
+        if info[#info] == "actionBar7ConcealDuringCombat" then settingsDB["actionBar7"] = true end
+        if info[#info] == "actionBar8ConcealDuringCombat" then settingsDB["actionBar8"] = true end
+        if info[#info] == "petActionBarConcealDuringCombat" then settingsDB["petActionBar"] = true end
+        if info[#info] == "stanceBarConcealDuringCombat" then settingsDB["stanceBar"] = true end
+        if info[#info] == "microBarConcealDuringCombat" then settingsDB["microBar"] = true end
+        if info[#info] == "experienceConcealDuringCombat" then settingsDB["experience"] = true end
         Conceal:loadConfig()
     end
     Conceal:RefreshGUI()
 end
 
 function Conceal:GetSlider(info)
-    return self.db.profile[info[#info]]
+    return settingsDB[info[#info]]
 end
 
 function Conceal:SetSlider(info, value)
-    self.db.profile[info[#info]] = value
+    settingsDB[info[#info]] = value
     if info[#info] == "alpha" then 
         local frameAlpha = value;
         if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
         Conceal:UpdateFramesToAlpha(frameAlpha)
     end
 end
+
+function Conceal:OnEvent(event, ...)
+	self[event](self, event, ...)
+    if event == "PLAYER_LOGOUT" then
+		ConcealDB = settingsDB
+	end
+end
+
+function Conceal:ADDON_LOADED(event, addOnName)
+	if event == "ADDON_LOADED" and (addOnName == "Conceal") then
+        Conceal:OnInitialize()
+    end
+end
+
+Conceal:RegisterEvent("ADDON_LOADED")
+Conceal:RegisterEvent("PLAYER_LOGOUT")
+Conceal:RegisterEvent("PLAYER_ENTER_COMBAT")
+Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT")
+Conceal:RegisterEvent("PLAYER_REGEN_DISABLED")
+Conceal:RegisterEvent("PLAYER_REGEN_ENABLED")
+Conceal:RegisterEvent("PLAYER_TARGET_CHANGED")
+Conceal:SetScript("OnEvent", Conceal.OnEvent)
