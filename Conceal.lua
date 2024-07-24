@@ -311,12 +311,12 @@ end
 
 
 function Conceal:OnInitialize() 
-    local savedSettingsDB = ConcealDB
+    local savedSettingsDB = ConcealDataBase
     print(savedSettingsDB)
     if not savedSettingsDB then 
         print("Database is empty")
         settingsDB = defaults
-        ConcealDB = defaults
+        ConcealDataBase = defaults
     else 
         print("Database is not empty")
         settingsDB = savedSettingsDB
@@ -756,7 +756,7 @@ end
 function Conceal:OnEvent(event, ...)
 	self[event](self, event, ...)
     if event == "PLAYER_LOGOUT" then
-		ConcealDB = settingsDB
+		ConcealDataBase = settingsDB
 	end
 end
 
