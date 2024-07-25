@@ -312,16 +312,12 @@ end
 
 function Conceal:OnInitialize() 
     local savedSettingsDB = ConcealDataBase
-    print(savedSettingsDB)
     if not savedSettingsDB then 
-        print("Database is empty")
         settingsDB = defaults
         ConcealDataBase = defaults
     else 
-        print("Database is not empty")
         settingsDB = savedSettingsDB
     end 
-    print(settingsDB)
 
     Conceal:CreateSettingsWindow()
     Conceal:HideGcdFlash()
