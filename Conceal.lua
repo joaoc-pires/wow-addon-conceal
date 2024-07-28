@@ -448,12 +448,14 @@ function Conceal:ShowMouseOverElements()
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
     if settingsDB["selfFrame"] then 
-        if PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() then 
+        if PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() or TargetFrame:IsMouseOver() then 
             Conceal:FadeIn(PlayerFrame)
             Conceal:FadeIn(PetFrame)
+            Conceal:FadeIn(TargetFrame)
         elseif settingsDB["selfFrameConcealDuringCombat"] then 
             Conceal:FadeOut(PlayerFrame)
             Conceal:FadeOut(PetFrame)
+            Conceal:FadeOut(TargetFrame)
         end 
     end
 
@@ -589,7 +591,7 @@ function Conceal:HideElements()
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
     
     -- Player Frame
-    if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver()) then 
+    if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() or TargetFrame:IsMouseOver()) then 
         Conceal:FadeOut(PlayerFrame) 
         Conceal:FadeOut(PetFrame)
         Conceal:FadeOut(TargetFrame)
