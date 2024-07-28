@@ -40,8 +40,9 @@ local defaults = {
     experienceConcealDuringCombat = false,
     focusFrame = false,
     focusFrameConcealDuringCombat = false,
-    castBar = false;
-    objectiveTracker = false;
+    castBar = false,
+    objectiveTracker = false,
+    actionTargetMode = false
 }
 
 local isInCombat = false
@@ -101,6 +102,10 @@ function Conceal:SetupSubCategoryCheckbox(variable, name, tooltip, defaultValue,
 end
 
 function Conceal:CreateSettingsWindow()
+    -- This is an implementation detail for 2.1 when support for Action Target Mode was added
+    if not (settingsDB["actionTargetMode"]) then 
+        settingsDB["actionTargetMode"] = false
+    end
 	-- Adds the main Category
 	local concealOptions, concealLayout = Settings.RegisterVerticalLayoutCategory("Conceal")
 	concealOptions.ID = "Conceal"
@@ -178,7 +183,10 @@ function Conceal:CreateSettingsWindow()
 			settingsDB["health"] = setting:GetValue()
 		end) 
 	end
-    	
+
+    -- For Action Target Mode
+    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("actionTargetMode","Action Target Mode","Will only show frames when entering combat", settingsDB["actionTargetMode"], concealOptions)
+
     -- Adds Frames sub Category
 	local framesCategory, framesLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Combat Elements");
 	Settings.RegisterAddOnCategory(framesCategory)
@@ -315,7 +323,6 @@ function Conceal:CreateSettingsWindow()
     local objectiveTrackerSetting, objectiveTrackerInitializer = Conceal:SetupSubCategoryCheckbox("objectiveTracker","Enable Objective Tracker","Conceal Objective Tracker", settingsDB["objectiveTracker"], extraCategory)
 end
 
-
 function Conceal:OnInitialize() 
     local savedSettingsDB = ConcealDataBase
     if not savedSettingsDB then 
@@ -407,7 +414,11 @@ end
 -- Actions
 function Conceal:ShowCombatElements()
 
-    if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then Conceal:FadeIn(PlayerFrame); Conceal:FadeIn(PetFrame) end
+    if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then 
+        Conceal:FadeIn(PlayerFrame)
+        Conceal:FadeIn(PetFrame) 
+        Conceal:FadeIn(TargetFrame)
+    end
     if settingsDB["targetFrame"] and not settingsDB["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
     if settingsDB["focusFrame"] and not settingsDB["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
     BuffFrame:SetAlpha(1)
@@ -581,6 +592,7 @@ function Conceal:HideElements()
     if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver()) then 
         Conceal:FadeOut(PlayerFrame) 
         Conceal:FadeOut(PetFrame)
+        Conceal:FadeOut(TargetFrame)
     end
 
     if settingsDB["targetFrame"] and not TargetFrame:IsMouseOver() then Conceal:FadeOut(TargetFrame); end
@@ -625,7 +637,9 @@ end
 
 function Conceal:PLAYER_TARGET_CHANGED(info, value)
     if UnitExists("target") then 
-         Conceal:ShowCombatElements();
+        if not (settingsDB["actionTargetMode"]) then 
+            Conceal:ShowCombatElements();
+        end    
     else
         Conceal:HideElements()
     end
@@ -662,7 +676,9 @@ end
 
 function Conceal:RefreshGUI()
     local shouldShowCombatElement = false
-    if UnitExists("target") then shouldShowCombatElement = shouldShowCombatElement or true; end
+    if UnitExists("target") then 
+        shouldShowCombatElement = not settingsDB["actionTargetMode"] 
+    end
     if Conceal:isHealthBelowThreshold() then shouldShowCombatElement = shouldShowCombatElement or true; end
     if shouldShowCombatElement then 
         Conceal:ShowCombatElements();
@@ -680,7 +696,11 @@ function Conceal:GetStatus(info)
 end
 
 function Conceal:UpdateFramesToAlpha(alpha)
-    if settingsDB["selfFrame"] then PlayerFrame:SetAlpha(alpha); PetFrame:SetAlpha(alpha); end
+    if settingsDB["selfFrame"] then 
+        PlayerFrame:SetAlpha(alpha) 
+        PetFrame:SetAlpha(alpha)
+        TargetFrame:SetAlpha(alpha)
+    end
     if settingsDB["targetFrame"] then TargetFrame:SetAlpha(alpha); end
     if settingsDB["buffFrame"] then BuffFrame:SetAlpha(alpha); end
     if settingsDB["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
@@ -775,4 +795,5 @@ Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT")
 Conceal:RegisterEvent("PLAYER_REGEN_DISABLED")
 Conceal:RegisterEvent("PLAYER_REGEN_ENABLED")
 Conceal:RegisterEvent("PLAYER_TARGET_CHANGED")
+
 Conceal:SetScript("OnEvent", Conceal.OnEvent)
