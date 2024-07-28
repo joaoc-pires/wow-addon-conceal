@@ -40,8 +40,9 @@ local defaults = {
     experienceConcealDuringCombat = false,
     focusFrame = false,
     focusFrameConcealDuringCombat = false,
-    castBar = false;
-    objectiveTracker = false;
+    castBar = false,
+    objectiveTracker = false,
+    actionTargetMode = false
 }
 
 local isInCombat = false
@@ -81,6 +82,12 @@ function Conceal:UpdateUI()
     if settingsDB["actionBar7"] then Conceal:FadeIn(ActionBar7, true) else Conceal:FadeOut(ActionBar7, true) end
     if settingsDB["actionBar8"] then Conceal:FadeIn(ActionBar8, true) else Conceal:FadeOut(ActionBar8, true) end
 
+    if settingsDB["petActionBar"] then Conceal:FadeIn(PetActionBar, true) else Conceal:FadeOut(PetActionBar, true) end
+    if settingsDB["stanceBar"] then Conceal:FadeIn(StanceBar, true) else Conceal:FadeOut(StanceBar, true) end
+    if settingsDB["microBar"] then Conceal:FadeIn(MicroMenuContainer, true) else Conceal:FadeOut(MicroMenuContainer, true) end
+    if settingsDB["experience"] then Conceal:FadeIn(StatusTrackingBarManager, true) else Conceal:FadeOut(StatusTrackingBarManager, true) end
+    if settingsDB["objectiveTracker"] then Conceal:FadeIn(ObjectiveTrackerFrame, true) else Conceal:FadeOut(ObjectiveTrackerFrame, true) end
+    
     Conceal:RefreshGUI()
 end
 
@@ -95,6 +102,10 @@ function Conceal:SetupSubCategoryCheckbox(variable, name, tooltip, defaultValue,
 end
 
 function Conceal:CreateSettingsWindow()
+    -- This is an implementation detail for 2.1 when support for Action Target Mode was added
+    if not (settingsDB["actionTargetMode"]) then 
+        settingsDB["actionTargetMode"] = false
+    end
 	-- Adds the main Category
 	local concealOptions, concealLayout = Settings.RegisterVerticalLayoutCategory("Conceal")
 	concealOptions.ID = "Conceal"
@@ -172,7 +183,10 @@ function Conceal:CreateSettingsWindow()
 			settingsDB["health"] = setting:GetValue()
 		end) 
 	end
-    	
+
+    -- For Action Target Mode
+    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("actionTargetMode","Action Target Mode","Will only show frames when entering combat", settingsDB["actionTargetMode"], concealOptions)
+
     -- Adds Frames sub Category
 	local framesCategory, framesLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Combat Elements");
 	Settings.RegisterAddOnCategory(framesCategory)
@@ -309,7 +323,6 @@ function Conceal:CreateSettingsWindow()
     local objectiveTrackerSetting, objectiveTrackerInitializer = Conceal:SetupSubCategoryCheckbox("objectiveTracker","Enable Objective Tracker","Conceal Objective Tracker", settingsDB["objectiveTracker"], extraCategory)
 end
 
-
 function Conceal:OnInitialize() 
     local savedSettingsDB = ConcealDataBase
     if not savedSettingsDB then 
@@ -401,7 +414,11 @@ end
 -- Actions
 function Conceal:ShowCombatElements()
 
-    if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then Conceal:FadeIn(PlayerFrame); Conceal:FadeIn(PetFrame) end
+    if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then 
+        Conceal:FadeIn(PlayerFrame)
+        Conceal:FadeIn(PetFrame) 
+        Conceal:FadeIn(TargetFrame)
+    end
     if settingsDB["targetFrame"] and not settingsDB["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
     if settingsDB["focusFrame"] and not settingsDB["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
     BuffFrame:SetAlpha(1)
@@ -422,7 +439,7 @@ function Conceal:ShowCombatElements()
 
     -- Stance Bar
     if settingsDB["stanceBar"] and not settingsDB["stanceBarConcealDuringCombat"] then StanceBar:SetAlpha(1) end
-    if settingsDB["microBar"] and not settingsDB["microBarConcealDuringCombat"] then MicroButtonAndBagsBar:SetAlpha(1) end
+    if settingsDB["microBar"] and not settingsDB["microBarConcealDuringCombat"] then MicroMenuContainer:SetAlpha(1) end
     if settingsDB["experience"] and not settingsDB["experienceConcealDuringCombat"] then StatusTrackingBarManager:SetAlpha(1) end
 end
 
@@ -544,10 +561,10 @@ function Conceal:ShowMouseOverElements()
         end 
     end
     if settingsDB["microBar"] then 
-        if MicroButtonAndBagsBar:IsMouseOver() then 
-            Conceal:FadeIn(MicroButtonAndBagsBar)
+        if MicroMenuContainer:IsMouseOver() then 
+            Conceal:FadeIn(MicroMenuContainer)
         elseif settingsDB["microBarConcealDuringCombat"] then 
-            Conceal:FadeOut(MicroButtonAndBagsBar)
+            Conceal:FadeOut(MicroMenuContainer)
         end 
     end
     if settingsDB["experience"] then 
@@ -575,6 +592,7 @@ function Conceal:HideElements()
     if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver()) then 
         Conceal:FadeOut(PlayerFrame) 
         Conceal:FadeOut(PetFrame)
+        Conceal:FadeOut(TargetFrame)
     end
 
     if settingsDB["targetFrame"] and not TargetFrame:IsMouseOver() then Conceal:FadeOut(TargetFrame); end
@@ -601,7 +619,7 @@ function Conceal:HideElements()
     if settingsDB["actionBar8"] and not ActionBar8:IsMouseOver() then Conceal:FadeOut(ActionBar8); end
     if settingsDB["petActionBar"] and not PetActionBar:IsMouseOver() then Conceal:FadeOut(PetActionBar); end
     if settingsDB["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
-    if settingsDB["microBar"] and not MicroButtonAndBagsBar:IsMouseOver() then Conceal:FadeOut(MicroButtonAndBagsBar); end
+    if settingsDB["microBar"] and not MicroMenuContainer:IsMouseOver() then Conceal:FadeOut(MicroMenuContainer); end
     if settingsDB["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
     if settingsDB["objectiveTracker"] and not ObjectiveTrackerFrame:IsMouseOver() then Conceal:FadeOut(ObjectiveTrackerFrame); end
 end
@@ -619,7 +637,9 @@ end
 
 function Conceal:PLAYER_TARGET_CHANGED(info, value)
     if UnitExists("target") then 
-         Conceal:ShowCombatElements();
+        if not (settingsDB["actionTargetMode"]) then 
+            Conceal:ShowCombatElements();
+        end    
     else
         Conceal:HideElements()
     end
@@ -656,7 +676,9 @@ end
 
 function Conceal:RefreshGUI()
     local shouldShowCombatElement = false
-    if UnitExists("target") then shouldShowCombatElement = shouldShowCombatElement or true; end
+    if UnitExists("target") then 
+        shouldShowCombatElement = not settingsDB["actionTargetMode"] 
+    end
     if Conceal:isHealthBelowThreshold() then shouldShowCombatElement = shouldShowCombatElement or true; end
     if shouldShowCombatElement then 
         Conceal:ShowCombatElements();
@@ -674,7 +696,11 @@ function Conceal:GetStatus(info)
 end
 
 function Conceal:UpdateFramesToAlpha(alpha)
-    if settingsDB["selfFrame"] then PlayerFrame:SetAlpha(alpha); PetFrame:SetAlpha(alpha); end
+    if settingsDB["selfFrame"] then 
+        PlayerFrame:SetAlpha(alpha) 
+        PetFrame:SetAlpha(alpha)
+        TargetFrame:SetAlpha(alpha)
+    end
     if settingsDB["targetFrame"] then TargetFrame:SetAlpha(alpha); end
     if settingsDB["buffFrame"] then BuffFrame:SetAlpha(alpha); end
     if settingsDB["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
@@ -689,7 +715,7 @@ function Conceal:UpdateFramesToAlpha(alpha)
     if settingsDB["actionBar8"] then ActionBar8:SetAlpha(alpha); end
     if settingsDB["petActionBar"] then PetActionBar:SetAlpha(alpha); end
     if settingsDB["stanceBar"] then StanceBar:SetAlpha(alpha); end
-    if settingsDB["microBar"] then MicroButtonAndBagsBar:SetAlpha(alpha); end
+    if settingsDB["microBar"] then MicroMenuContainer:SetAlpha(alpha); end
     if settingsDB["objectiveTracker"] then ObjectiveTrackerFrame:SetAlpha(alpha); end
 end
 
@@ -711,7 +737,7 @@ function Conceal:SetStatus(info)
         if info[#info] == "actionBar8"  then ActionBar8:SetAlpha(1); settingsDB["actionBar8ConcealDuringCombat"] = false end
         if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); settingsDB["petActionBarConcealDuringCombat"] = false end
         if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); settingsDB["stanceBarConcealDuringCombat"] = false end
-        if info[#info] == "microBar"    then MicroButtonAndBagsBar:SetAlpha(1); settingsDB["microBarConcealDuringCombat"] = false end
+        if info[#info] == "microBar"    then MicroMenuContainer:SetAlpha(1); settingsDB["microBarConcealDuringCombat"] = false end
         if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); settingsDB["experienceConcealDuringCombat"] = false end
         if info[#info] == "objectiveTracker" then ObjectiveTrackerFrame:SetAlpha(1); settingsDB["objectiveTracker"] = false end
     else 
@@ -769,4 +795,5 @@ Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT")
 Conceal:RegisterEvent("PLAYER_REGEN_DISABLED")
 Conceal:RegisterEvent("PLAYER_REGEN_ENABLED")
 Conceal:RegisterEvent("PLAYER_TARGET_CHANGED")
+
 Conceal:SetScript("OnEvent", Conceal.OnEvent)
