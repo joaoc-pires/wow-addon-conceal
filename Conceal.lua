@@ -92,7 +92,7 @@ function Conceal:UpdateUI()
 end
 
 function Conceal:SetupSubCategoryCheckbox(variable, name, tooltip, defaultValue, subCategory)
-	local setting = Settings.RegisterAddOnSetting(subCategory, name, variable, type(defaultValue), defaultValue)
+	local setting = Settings.RegisterAddOnSetting(subCategory, ("conceal_" .. variable), variable, settingsDB, type(defaultValue), name, defaultValue)
     local initializer = Settings.CreateCheckbox(subCategory, setting, tooltip)
 	Settings.SetOnValueChangedCallback(variable, function() 
 		settingsDB[variable] = setting:GetValue()
@@ -111,77 +111,85 @@ function Conceal:CreateSettingsWindow()
 	concealOptions.ID = "Conceal"
 	Settings.RegisterAddOnCategory(concealOptions)
 	do
-		local variable = "Opacity"
 		local name = "Opacity"
+        local variable = "conceal_alpha"
+		local variableKey = "alpha"
 		local tooltip = "Conceal Opacity"
 		local defaultValue = settingsDB["alpha"]
 		local minValue = 0
 		local maxValue = 100
 		local step = 5
-	
-		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
-		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-		Settings.CreateSlider(concealOptions, setting, options, tooltip)
-		Settings.SetOnValueChangedCallback(variable, function() 
-            local frameAlpha = setting:GetValue();
+
+        local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
+        setting:SetValueChangedCallback(function(setting, value) 
+            local frameAlpha = value;
 			settingsDB["alpha"] = frameAlpha
             if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
             -- This is to prevent frame drops
-            if frameAlpha == 1 then frameAlpha = 0.99 end
+            if frameAlpha == 1 then frameAlpha = 0.95 end
 			Conceal:UpdateFramesToAlpha(frameAlpha)
-		end) 
+        end)
+
+		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
+		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
+		Settings.CreateSlider(concealOptions, setting, options, tooltip)
 	end
 	do
-		local variable = "FadeIn"
-		local name = "Fade In duration"
+		local name = "Fade In Time"
+		local variable = "conceal_animationDuration"
+		local variableKey = "animationDuration"
 		local tooltip = "Controls the animations duration for the fade in"
 		local defaultValue = settingsDB["animationDuration"]
 		local minValue = 0
 		local maxValue = 2
 		local step = 0.25
 	
-		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
+		setting:SetValueChangedCallback(function(setting, value)
+			settingsDB[setting.variableKey] = value
+		end) 
+
 		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
 		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
 		Settings.CreateSlider(concealOptions, setting, options, tooltip)
-		Settings.SetOnValueChangedCallback(variable, function() 
-			settingsDB["animationDuration"] = setting:GetValue()
-		end) 
 	end
 	do
-		local variable = "FadeOut"
-		local name = "Fade Out duration"
+		local name = "Fade Out Time"
+		local variable = "conceal_fadeOutDuration"
+		local variableKey = "fadeOutDuration"
 		local tooltip = "Controls the animations duration for the fade out"
-		local defaultValue = settingsDB["fadeOutDuration"]
+		local defaultValue = settingsDB[variable]
 		local minValue = 0
 		local maxValue = 2
 		local step = 0.25
 	
-		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
+		setting:SetValueChangedCallback(function(setting, value)
+			settingsDB[setting.variableKey] = value
+		end) 
+
 		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
 		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
 		Settings.CreateSlider(concealOptions, setting, options, tooltip)
-		Settings.SetOnValueChangedCallback(variable, function() 
-			settingsDB["fadeOutDuration"] = setting:GetValue()
-		end) 
 	end
 	do
-		local variable = "HealthThreshold"
 		local name = "Health Threshold"
+		local variable = "conceal_health"
+		local variableKey = "health"
 		local tooltip = "Controls the threshold which will trigger Conceal to show affected elements"
-		local defaultValue = settingsDB["health"]
+		local defaultValue = settingsDB[variableKey]
 		local minValue = 0
 		local maxValue = 100
 		local step = 1
 	
-		local setting = Settings.RegisterAddOnSetting(concealOptions, name, variable, type(defaultValue), defaultValue)
+		local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
+		setting:SetValueChangedCallback(function(setting, value)
+			settingsDB[setting.variableKey] = value
+		end) 
+
 		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
 		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
 		Settings.CreateSlider(concealOptions, setting, options, tooltip)
-		Settings.SetOnValueChangedCallback(variable, function() 
-			settingsDB["health"] = setting:GetValue()
-		end) 
 	end
 
     -- For Action Target Mode
