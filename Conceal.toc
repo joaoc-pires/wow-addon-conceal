@@ -1,8 +1,8 @@
-## Interface: 110000
+## Interface: 110002
 ## Title: Conceal |cff00aa002.1.1|r
 ## Author: Keirmot
 ## Notes: Hide the player frame, and action bars when not in use!
-## Version: 2.1.1
+## Version: 2.1.2
 ## IconTexture: Interface\AddOns\Conceal\Assets\ConcealLogo
 
 ## SavedVariables: ConcealDB, ConcealDataBase
