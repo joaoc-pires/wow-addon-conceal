@@ -158,7 +158,7 @@ function Conceal:CreateSettingsWindow()
 		local variable = "conceal_fadeOutDuration"
 		local variableKey = "fadeOutDuration"
 		local tooltip = "Controls the animations duration for the fade out"
-		local defaultValue = settingsDB[variable]
+		local defaultValue = settingsDB[variableKey]
 		local minValue = 0
 		local maxValue = 2
 		local step = 0.25
@@ -787,14 +787,17 @@ end
 
 function Conceal:OnEvent(event, ...)
 	self[event](self, event, ...)
-    if event == "PLAYER_LOGOUT" then
-		ConcealDataBase = settingsDB
-	end
 end
 
 function Conceal:ADDON_LOADED(event, addOnName)
 	if event == "ADDON_LOADED" and (addOnName == "Conceal") then
         Conceal:OnInitialize()
+    end
+end
+
+function Conceal:PLAYER_LOGOUT(event, addOnName)
+	if event == "PLAYER_LOGOUT" and (addOnName == "Conceal") then
+        ConcealDataBase = settingsDB
     end
 end
 
