@@ -424,8 +424,7 @@ function Conceal:ShowCombatElements()
 
     if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then 
         Conceal:FadeIn(PlayerFrame)
-        Conceal:FadeIn(PetFrame) 
-        Conceal:FadeIn(TargetFrame)
+        Conceal:FadeIn(PetFrame)
     end
     if settingsDB["targetFrame"] and not settingsDB["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
     if settingsDB["focusFrame"] and not settingsDB["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
