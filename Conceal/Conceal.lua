@@ -42,7 +42,13 @@ local defaults = {
     focusFrameConcealDuringCombat = false,
     castBar = false,
     objectiveTracker = false,
-    actionTargetMode = false
+    actionTargetMode = false,
+    buffIconCooldownViewer = false,
+    buffIconCooldownViewerConcealDuringCombat = false,
+    essentialCooldownViewer = false,
+    essentialCooldownViewerConcealDuringCombat = false,
+    utilityCooldownViewer = false,
+    utilityCooldownViewerConcealDuringCombat = false
 }
 
 local isInCombat = false
@@ -182,6 +188,79 @@ function Conceal:CreateSettingsWindow()
     Conceal:SetupSubCategoryCheckbox("buffFrame","Enable Buff List","Conceal Buffs", settingsDB["buffFrame"], framesCategory)
 	Conceal:SetupSubCategoryCheckbox("debuffFrame","Debuff List","Conceal Debuffs", settingsDB["debuffFrame"], framesCategory)
 
+    -- Adds Cooldown Manager sub Category
+	local cdManagerCategory, cdManagerLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Cooldown Manager");
+	Settings.RegisterAddOnCategory(cdManagerCategory)
+
+    local bicvSetting, bicvInitializer = Conceal:SetupSubCategoryCheckbox(
+        "buffIconCooldownViewer",
+        "Buff Icon Cooldown Viewer",
+        "Conceal BuffIconCooldownViewer",
+        settingsDB["buffIconCooldownViewer"],
+        cdManagerCategory
+    )
+
+    local bicvCombatSetting, bicvCombatInitializer = Conceal:SetupSubCategoryCheckbox(
+        "buffIconCooldownViewerConcealDuringCombat",
+        "Hide Buff Icon Cooldown Viewer in combat",
+        "Only shows BuffIconCooldownViewer when the mouse is hovering",
+        settingsDB["buffIconCooldownViewerConcealDuringCombat"],
+        cdManagerCategory
+    )
+
+    local function canSetBICVInCombat()
+        return settingsDB["buffIconCooldownViewer"]
+    end
+
+    bicvCombatInitializer:Indent()
+    bicvCombatInitializer:SetParentInitializer(bicvInitializer, canSetBICVInCombat)
+
+    local ecvSetting, ecvInitializer = Conceal:SetupSubCategoryCheckbox(
+        "essentialCooldownViewer",
+        "Essential Cooldown Viewer",
+        "Conceal EssentialCooldownViewer",
+        settingsDB["essentialCooldownViewer"],
+        cdManagerCategory
+    )
+
+    local ecvCombatSetting, ecvCombatInitializer = Conceal:SetupSubCategoryCheckbox(
+        "essentialCooldownViewerConcealDuringCombat",
+        "Hide Essential Cooldown Viewer in combat",
+        "Only shows EssentialCooldownViewer when the mouse is hovering",
+        settingsDB["essentialCooldownViewerConcealDuringCombat"],
+        cdManagerCategory
+    )
+    
+    local function canSetECVInCombat()
+        return settingsDB["essentialCooldownViewer"]
+    end
+
+    ecvCombatInitializer:Indent()
+    ecvCombatInitializer:SetParentInitializer(ecvInitializer, canSetECVInCombat)
+
+    local ucvSetting, ucvInitializer = Conceal:SetupSubCategoryCheckbox(
+        "utilityCooldownViewer",
+        "Utility Cooldown Viewer",
+        "Conceal UtilityCooldownViewer",
+        settingsDB["utilityCooldownViewer"],
+        cdManagerCategory
+    )
+
+    local ucvCombatSetting, ucvCombatInitializer = Conceal:SetupSubCategoryCheckbox(
+        "utilityCooldownViewerConcealDuringCombat",
+        "Hide Utility Cooldown Viewer in combat",
+        "Only shows UtilityCooldownViewer when the mouse is hovering",
+        settingsDB["utilityCooldownViewerConcealDuringCombat"],
+        cdManagerCategory
+    )
+
+    local function canSetUCVInCombat()
+        return settingsDB["utilityCooldownViewer"]
+    end
+
+    ucvCombatInitializer:Indent()
+    ucvCombatInitializer:SetParentInitializer(ucvInitializer, canSetUCVInCombat)
+
 	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Cast Bar", "Selecting this option will ALWAYS hide your cast bar"));
 	Conceal:SetupSubCategoryCheckbox("castBar","Cast Bar","Completly hides the Cast Bar", 	settingsDB["castBar"], framesCategory)
 
@@ -294,23 +373,30 @@ function Conceal:CreateSettingsWindow()
     local objectiveTrackerSetting, objectiveTrackerInitializer = Conceal:SetupSubCategoryCheckbox("objectiveTracker","Enable Objective Tracker","Conceal Objective Tracker", settingsDB["objectiveTracker"], extraCategory)
 end
 
-function Conceal:OnInitialize() 
+function Conceal:OnInitialize()
     local savedSettingsDB = ConcealDataBase
-    if not savedSettingsDB then 
+    if not savedSettingsDB then
         settingsDB = defaults
         ConcealDataBase = defaults
-    else 
+    else
         settingsDB = savedSettingsDB
-    end 
+        -- Merge new defaults into existing saved variables (upgrade-safe)
+        for k, v in pairs(defaults) do
+            if settingsDB[k] == nil then
+                settingsDB[k] = v
+            end
+        end
+    end
 
     Conceal:CreateSettingsWindow()
     Conceal:HideGcdFlash()
-    QueueStatusButton:SetParent(UIParent);
+    QueueStatusButton:SetParent(UIParent)
     tickerHandle = C_Timer.NewTicker(0.25, function()
         Conceal:TickUpdate()
     end)
     Conceal:TickUpdate()
 end
+
 
 -- Conditionals
 function Conceal:FadeIn(frame, forced)
@@ -477,6 +563,10 @@ function Conceal:TickUpdate()
         if lastDesired["debuffFrame"] ~= 1 then DebuffFrame:SetAlpha(1); lastDesired["debuffFrame"] = 1 end
     end
 
+    Apply("buffIconCooldownViewer", BuffIconCooldownViewer, "buffIconCooldownViewerConcealDuringCombat")
+    Apply("essentialCooldownViewer", EssentialCooldownViewer, "essentialCooldownViewerConcealDuringCombat")
+    Apply("utilityCooldownViewer", UtilityCooldownViewer, "utilityCooldownViewerConcealDuringCombat")
+
     Apply("actionBar1", ActionBar1, "actionBar1ConcealDuringCombat", Conceal.IsActionBar1MouseOver)
     Apply("actionBar2", ActionBar2, "actionBar2ConcealDuringCombat")
     Apply("actionBar3", ActionBar3, "actionBar3ConcealDuringCombat")
@@ -529,10 +619,6 @@ function Conceal:HideGcdFlash()
     end
 end
 
-function Conceal:ProfileHandler() 
-
-end
-
 function Conceal:GetStatus(info)
     return settingsDB[info[#info]]
 end
@@ -580,6 +666,12 @@ function Conceal:SetStatus(info)
             settingsDB["experienceConcealDuringCombat"] = false
         elseif key == "objectiveTracker" then
             settingsDB["objectiveTracker"] = false
+        elseif key == "buffIconCooldownViewer" then
+            settingsDB["buffIconCooldownViewerConcealDuringCombat"] = false
+        elseif key == "essentialCooldownViewer" then
+            settingsDB["essentialCooldownViewerConcealDuringCombat"] = false
+        elseif key == "utilityCooldownViewer" then
+            settingsDB["utilityCooldownViewerConcealDuringCombat"] = false
         end
     else
         settingsDB[key] = true
@@ -614,6 +706,12 @@ function Conceal:SetStatus(info)
             settingsDB["microBar"] = true
         elseif key == "experienceConcealDuringCombat" then
             settingsDB["experience"] = true
+        elseif key == "buffIconCooldownViewerConcealDuringCombat" then
+            settingsDB["buffIconCooldownViewer"] = true
+        elseif key == "essentialCooldownViewerConcealDuringCombat" then
+            settingsDB["essentialCooldownViewer"] = true
+        elseif key == "utilityCooldownViewerConcealDuringCombat" then
+            settingsDB["utilityCooldownViewer"] = true
         end
     end
     Conceal:UpdateUI()  
