@@ -46,59 +46,41 @@ local defaults = {
 }
 
 local isInCombat = false
+local lastDesired = {}   -- key -> last alpha applied (number, normalized 0..1)
+local tickerHandle = nil
 
-ActionBar1 = MainActionBar
-ActionBar2 = MultiBarBottomLeft
-ActionBar3 = MultiBarBottomRight
-ActionBar4 = MultiBarRight 
-ActionBar5 = MultiBarLeft
-ActionBar6 = MultiBar5
-ActionBar7 = MultiBar6
-ActionBar8 = MultiBar7
+local ActionBar1 = MainActionBar
+local ActionBar2 = MultiBarBottomLeft
+local ActionBar3 = MultiBarBottomRight
+local ActionBar4 = MultiBarRight 
+local ActionBar5 = MultiBarLeft
+local ActionBar6 = MultiBar5
+local ActionBar7 = MultiBar6
+local ActionBar8 = MultiBar7
 
-
-function Conceal:UpdateUI() 
-    -- this method is used to update which parts of the addon changed when the settings were changed
-    if settingsDB["selfFrame"] then
-        Conceal:FadeIn(PlayerFrame, true) 
-        Conceal:FadeIn(PetFrame, true)
-    else
-        Conceal:FadeOut(PlayerFrame, true) 
-        Conceal:FadeOut(PetFrame, true)
-    end
-    if settingsDB["targetFrame"] then Conceal:FadeIn(TargetFrame, true) else Conceal:FadeOut(TargetFrame, true) end
-    if settingsDB["buffFrame"] then Conceal:FadeIn(BuffFrame, true) else Conceal:FadeOut(BuffFrame, true) end
-    if settingsDB["debuffFrame"] then Conceal:FadeIn(DebuffFrame, true) else Conceal:FadeOut(DebuffFrame, true) end
-
-    if settingsDB["debuffFrame"] then Conceal:FadeIn(DebuffFrame, true) else Conceal:FadeOut(DebuffFrame, true) end
-    if settingsDB["debuffFrame"] then Conceal:FadeIn(DebuffFrame, true) else Conceal:FadeOut(DebuffFrame, true) end
-
-    if settingsDB["actionBar1"] then Conceal:FadeIn(ActionBar1, true) else Conceal:FadeOut(ActionBar1, true) end
-    if settingsDB["actionBar2"] then Conceal:FadeIn(ActionBar2, true) else Conceal:FadeOut(ActionBar2, true) end
-    if settingsDB["actionBar3"] then Conceal:FadeIn(ActionBar3, true) else Conceal:FadeOut(ActionBar3, true) end
-    if settingsDB["actionBar4"] then Conceal:FadeIn(ActionBar4, true) else Conceal:FadeOut(ActionBar4, true) end
-    if settingsDB["actionBar5"] then Conceal:FadeIn(ActionBar5, true) else Conceal:FadeOut(ActionBar5, true) end
-    if settingsDB["actionBar6"] then Conceal:FadeIn(ActionBar6, true) else Conceal:FadeOut(ActionBar6, true) end
-    if settingsDB["actionBar7"] then Conceal:FadeIn(ActionBar7, true) else Conceal:FadeOut(ActionBar7, true) end
-    if settingsDB["actionBar8"] then Conceal:FadeIn(ActionBar8, true) else Conceal:FadeOut(ActionBar8, true) end
-
-    if settingsDB["petActionBar"] then Conceal:FadeIn(PetActionBar, true) else Conceal:FadeOut(PetActionBar, true) end
-    if settingsDB["stanceBar"] then Conceal:FadeIn(StanceBar, true) else Conceal:FadeOut(StanceBar, true) end
-    if settingsDB["microBar"] then Conceal:FadeIn(MicroMenuContainer, true) else Conceal:FadeOut(MicroMenuContainer, true) end
-    if settingsDB["experience"] then Conceal:FadeIn(StatusTrackingBarManager, true) else Conceal:FadeOut(StatusTrackingBarManager, true) end
-    if settingsDB["objectiveTracker"] then Conceal:FadeIn(ObjectiveTrackerFrame, true) else Conceal:FadeOut(ObjectiveTrackerFrame, true) end
-    
-    Conceal:RefreshGUI()
+function Conceal:UpdateUI()
+    wipe(lastDesired)
+    Conceal:TickUpdate()
 end
 
-function Conceal:SetupSubCategoryCheckbox(variable, name, tooltip, defaultValue, subCategory)
-	local setting = Settings.RegisterAddOnSetting(subCategory, ("conceal_" .. variable), variable, settingsDB, type(defaultValue), name, defaultValue)
-    local initializer = Settings.CreateCheckbox(subCategory, setting, tooltip)
-	Settings.SetOnValueChangedCallback(variable, function() 
-		settingsDB[variable] = setting:GetValue()
+function Conceal:SetupSubCategoryCheckbox(key, name, tooltip, defaultValue, category)
+    local setting = Settings.RegisterAddOnSetting(
+        category,
+        "conceal_" .. key,
+        key,
+        settingsDB,
+        type(defaultValue),
+        name,
+        defaultValue)
+
+    local initializer = Settings.CreateCheckbox(category, setting, tooltip)
+
+    setting:SetValueChangedCallback(function()
+        -- settingsDB[key] is already updated by the Settings system
         Conceal:UpdateUI()
-	end) 
-    return setting, initializer;
+    end)
+
+    return setting, initializer
 end
 
 function Conceal:CreateSettingsWindow()
@@ -172,25 +154,6 @@ function Conceal:CreateSettingsWindow()
 		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
 		Settings.CreateSlider(concealOptions, setting, options, tooltip)
 	end
-	do
-		local name = "Health Threshold"
-		local variable = "conceal_health"
-		local variableKey = "health"
-		local tooltip = "Controls the threshold which will trigger Conceal to show affected elements"
-		local defaultValue = settingsDB[variableKey]
-		local minValue = 0
-		local maxValue = 100
-		local step = 1
-	
-		local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
-		setting:SetValueChangedCallback(function(setting, value)
-			settingsDB[setting.variableKey] = value
-		end) 
-
-		local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-		options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-		Settings.CreateSlider(concealOptions, setting, options, tooltip)
-	end
 
     -- For Action Target Mode
     local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("actionTargetMode","Action Target Mode","Will only show frames when entering combat", settingsDB["actionTargetMode"], concealOptions)
@@ -243,7 +206,7 @@ function Conceal:CreateSettingsWindow()
     actionBar2CombatInitializer:SetParentInitializer(actionBar2Initializer, canSetActionBar2InCombat)
 
     local actionBar3Setting, actionBar3Initializer = Conceal:SetupSubCategoryCheckbox("actionBar3","Enable on Action Bar 3","Conceal Action Bar 3", settingsDB["actionBar3"], barsCategory)
-	local actionBar3CombatSetting, actionBar3CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar3ConcealDuringCombat","Hide Action Bar 3 in combat","Only shows the Action Bar 3 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local actionBar3CombatSetting, actionBar3CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar3ConcealDuringCombat","Hide Action Bar 3 in combat","Only shows the Action Bar 3 when the mouse is hovering", settingsDB["actionBar3ConcealDuringCombat"], barsCategory)
 	local function canSetActionBar3InCombat()
         return settingsDB["actionBar3"]
     end
@@ -252,7 +215,7 @@ function Conceal:CreateSettingsWindow()
 
 	barLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Extra Action Bars", "Action Bars from 4 to 8"));
     local actionBar4Setting, actionBar4Initializer = Conceal:SetupSubCategoryCheckbox("actionBar4","Enable on Action Bar 4","Conceal Action Bar 4", settingsDB["actionBar4"], barsCategory)
-	local actionBar4CombatSetting, actionBar4CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar4ConcealDuringCombat","Hide Action Bar 4 in combat","Only shows the Action Bar 4 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local actionBar4CombatSetting, actionBar4CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar4ConcealDuringCombat","Hide Action Bar 4 in combat","Only shows the Action Bar 4 when the mouse is hovering", settingsDB["actionBar4ConcealDuringCombat"], barsCategory)
 	local function canSetActionBar4InCombat()
         return settingsDB["actionBar4"]
     end
@@ -260,7 +223,7 @@ function Conceal:CreateSettingsWindow()
     actionBar4CombatInitializer:SetParentInitializer(actionBar4Initializer, canSetActionBar4InCombat)
 
     local actionBar5Setting, actionBar5Initializer = Conceal:SetupSubCategoryCheckbox("actionBar5","Enable on Action Bar 5","Conceal Action Bar 5", settingsDB["actionBar5"], barsCategory)
-    local actionBar5CombatSetting, actionBar5CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar5ConcealDuringCombat","Hide Action Bar 5 in combat","Only shows the Action Bar 5 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+    local actionBar5CombatSetting, actionBar5CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar5ConcealDuringCombat","Hide Action Bar 5 in combat","Only shows the Action Bar 5 when the mouse is hovering", settingsDB["actionBar5ConcealDuringCombat"], barsCategory)
     local function canSetActionBar5InCombat()
         return settingsDB["actionBar5"]
     end
@@ -268,7 +231,7 @@ function Conceal:CreateSettingsWindow()
     actionBar5CombatInitializer:SetParentInitializer(actionBar5Initializer, canSetActionBar5InCombat)
     
     local actionBar6Setting, actionBar6Initializer = Conceal:SetupSubCategoryCheckbox("actionBar6","Enable on Action Bar 6","Conceal Action Bar 6", settingsDB["actionBar6"], barsCategory)
-	local actionBar6CombatSetting, actionBar6CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar6ConcealDuringCombat","Hide Action Bar 6 in combat","Only shows the Action Bar 6 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local actionBar6CombatSetting, actionBar6CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar6ConcealDuringCombat","Hide Action Bar 6 in combat","Only shows the Action Bar 6 when the mouse is hovering", settingsDB["actionBar6ConcealDuringCombat"], barsCategory)
 	local function canSetActionBar6InCombat()
         return settingsDB["actionBar6"]
     end
@@ -276,7 +239,7 @@ function Conceal:CreateSettingsWindow()
     actionBar6CombatInitializer:SetParentInitializer(actionBar6Initializer, canSetActionBar6InCombat)
     
     local actionBar7Setting, actionBar7Initializer = Conceal:SetupSubCategoryCheckbox("actionBar7","Enable on Action Bar 7","Conceal Action Bar 7", settingsDB["actionBar7"], barsCategory)
-	local actionBar7CombatSetting, actionBar7CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar7ConcealDuringCombat","Hide Action Bar 7 in combat","Only shows the Action Bar 7 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local actionBar7CombatSetting, actionBar7CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar7ConcealDuringCombat","Hide Action Bar 7 in combat","Only shows the Action Bar 7 when the mouse is hovering", settingsDB["actionBar7ConcealDuringCombat"], barsCategory)
 	local function canSetActionBar7InCombat()
         return settingsDB["actionBar7"]
     end
@@ -284,7 +247,7 @@ function Conceal:CreateSettingsWindow()
     actionBar7CombatInitializer:SetParentInitializer(actionBar7Initializer, canSetActionBar7InCombat)
     
     local actionBar8Setting, actionBar8Initializer = Conceal:SetupSubCategoryCheckbox("actionBar8","Enable on Action Bar 8","Conceal Action Bar 8", settingsDB["actionBar8"], barsCategory)
-	local actionBar8CombatSetting, actionBar8CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar8ConcealDuringCombat","Hide Action Bar 8 in combat","Only shows the Action Bar 8 when the mouse is hovering", settingsDB["actionBar2ConcealDuringCombat"], barsCategory)
+	local actionBar8CombatSetting, actionBar8CombatInitializer = Conceal:SetupSubCategoryCheckbox("actionBar8ConcealDuringCombat","Hide Action Bar 8 in combat","Only shows the Action Bar 8 when the mouse is hovering", settingsDB["actionBar8ConcealDuringCombat"], barsCategory)
 	local function canSetActionBar8InCombat()
         return settingsDB["actionBar8"]
     end
@@ -343,319 +306,203 @@ function Conceal:OnInitialize()
     Conceal:CreateSettingsWindow()
     Conceal:HideGcdFlash()
     QueueStatusButton:SetParent(UIParent);
-    C_Timer.NewTicker(0.25, function()
-        Conceal:ShowMouseOverElements()
-        Conceal:RefreshGUI()
+    tickerHandle = C_Timer.NewTicker(0.25, function()
+        Conceal:TickUpdate()
     end)
+    Conceal:TickUpdate()
 end
 
 -- Conditionals
-function Conceal:isHealthBelowThreshold()
-    return false
-    -- local threshold = settingsDB["health"];
-    -- if threshold then
-    --     local hp = UnitHealth("player");
-    --     local maxHP = UnitHealthMax("player");
-
-    --     -- This check is needed because in 11.0 beta, when loading into a new zone, maxHP returns 0
-    --     if maxHP == 0 then
-    --         return false
-    --     end
-        
-    --     local pct = (hp / maxHP) * 100;
-    --     return pct < threshold;
-    -- else
-    --     return false;
-    -- end
-end
-
 function Conceal:FadeIn(frame, forced)
-    local alphaTimer = settingsDB["animationDuration"];
-    if alphaTimer == 0 then alphaTimer = 0.01; end
-    local frameAlpha = settingsDB["alpha"];
-    if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
-    
-    local currentAlpha = frame:GetAlpha()
-    currentAlpha = tonumber(string.format("%.2f", currentAlpha))
-    if (currentAlpha == frameAlpha) and not forced then 
-    
-        local animation = frame:CreateAnimationGroup();
-        local fadeIn = animation:CreateAnimation("Alpha");
-        fadeIn:SetFromAlpha(frameAlpha);
-        fadeIn:SetToAlpha(1);
-        fadeIn:SetDuration(alphaTimer);
-        fadeIn:SetStartDelay(0);
-        animation:SetToFinalAlpha(true)    
-        animation:Play();
+    if frame == nil then return end
+
+    if forced then
+        frame:SetAlpha(1) -- immediate show
+        return
     end
-    if forced then 
-       frame:SetAlpha(frameAlpha)
+
+    local duration = settingsDB["animationDuration"]
+    if duration == 0 then duration = 0.01 end
+
+    -- Optional guard to avoid restarting the same transition
+    local currentAlpha = tonumber(string.format("%.2f", frame:GetAlpha()))
+    if currentAlpha == 1 then
+        return
     end
+
+    Conceal:AnimateToAlpha(frame, 1, duration)
 end
+
 
 function Conceal:FadeOut(frame, forced)
     if frame == nil then return end
-    local alphaTimer = settingsDB["fadeOutDuration"];
-    if alphaTimer == 0 then alphaTimer = 0.01; end
-    local frameAlpha = settingsDB["alpha"];
-    if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
-    local currentAlpha = frame:GetAlpha()
-    currentAlpha = tonumber(string.format("%.2f", currentAlpha))
+    local frameAlpha = Conceal:GetConcealAlpha()
 
-    if (currentAlpha == 1) and not forced then 
-        frame:SetAlpha(0)
-        local animation = frame:CreateAnimationGroup();
-        local fadeIn = animation:CreateAnimation("Alpha");
-        fadeIn:SetFromAlpha(1);
-        fadeIn:SetToAlpha(frameAlpha);
-        fadeIn:SetDuration(alphaTimer);
-        fadeIn:SetStartDelay(0);
-        
-        animation:SetToFinalAlpha(true)      
-        animation:Play();
+    if forced then
+        frame:SetAlpha(frameAlpha) -- immediate conceal
+        return
     end
-    if forced then 
-       frame:SetAlpha(1)
+
+    local duration = settingsDB["fadeOutDuration"]
+    if duration == 0 then duration = 0.01 end
+
+    -- If you want to avoid restarting the same transition, keep the guard:
+    local currentAlpha = tonumber(string.format("%.2f", frame:GetAlpha()))
+    if currentAlpha == tonumber(string.format("%.2f", frameAlpha)) then
+        return
     end
+
+    Conceal:AnimateToAlpha(frame, frameAlpha, duration)
+end
+
+function Conceal:GetConcealAlpha()
+    local a = settingsDB["alpha"] or 30
+    if a > 1 then a = a / 100 end
+    if a == 1 then a = 0.95 end
+    return a
+end
+
+function Conceal:IsContextActive()
+    if isInCombat then return true end
+    if UnitExists("target") and not settingsDB["actionTargetMode"] then return true end
+    return false
+end
+
+function Conceal:IsActionBar1MouseOver()
+    for i = 1, 12 do
+        local btn = _G["ActionButton" .. i]
+        if btn and btn:IsMouseOver() then
+            return true
+        end
+    end
+    return false
 end
 
 -- Actions
-function Conceal:ShowCombatElements()
+-- Event Handlers
 
-    if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then 
-        Conceal:FadeIn(PlayerFrame)
-        if UnitExists("pet") then
-            Conceal:FadeIn(PetFrame)
-        end
+function Conceal:AnimateToAlpha(frame, toAlpha, duration)
+    if frame == nil then return end
+    local fromAlpha = frame:GetAlpha()
+
+    if tonumber(string.format("%.2f", fromAlpha)) == tonumber(string.format("%.2f", toAlpha)) then
+        return
     end
-    if settingsDB["targetFrame"] and not settingsDB["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
-    if settingsDB["focusFrame"] and not settingsDB["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
-    BuffFrame:SetAlpha(1)
-    DebuffFrame:SetAlpha(1)
-    -- Action Bar 1
-    local isActionBar1Concealable = settingsDB["actionBar1"] 
-    local concealActionBar1InCombat = settingsDB["actionBar1ConcealDuringCombat"] 
-    if isActionBar1Concealable and not concealActionBar1InCombat then ActionBar1:SetAlpha(1) end
 
-    if settingsDB["actionBar2"] and not settingsDB["actionBar2ConcealDuringCombat"] then ActionBar2:SetAlpha(1) end
-    if settingsDB["actionBar3"] and not settingsDB["actionBar3ConcealDuringCombat"] then ActionBar3:SetAlpha(1) end
-    if settingsDB["actionBar4"] and not settingsDB["actionBar4ConcealDuringCombat"] then ActionBar4:SetAlpha(1) end
-    if settingsDB["actionBar5"] and not settingsDB["actionBar5ConcealDuringCombat"] then ActionBar5:SetAlpha(1) end
-    if settingsDB["actionBar6"] and not settingsDB["actionBar6ConcealDuringCombat"] then ActionBar6:SetAlpha(1) end
-    if settingsDB["actionBar7"] and not settingsDB["actionBar7ConcealDuringCombat"] then ActionBar7:SetAlpha(1) end
-    if settingsDB["actionBar8"] and not settingsDB["actionBar8ConcealDuringCombat"] then ActionBar8:SetAlpha(1) end
-    if settingsDB["petActionBar"] and not settingsDB["petActionBarConcealDuringCombat"] then PetActionBar:SetAlpha(1) end
-
-    -- Stance Bar
-    if settingsDB["stanceBar"] and not settingsDB["stanceBarConcealDuringCombat"] then StanceBar:SetAlpha(1) end
-    if settingsDB["microBar"] and not settingsDB["microBarConcealDuringCombat"] then MicroMenuContainer:SetAlpha(1) end
-    if settingsDB["experience"] and not settingsDB["experienceConcealDuringCombat"] then StatusTrackingBarManager:SetAlpha(1) end
+    local anim = frame:CreateAnimationGroup()
+    local alphaAnim = anim:CreateAnimation("Alpha")
+    alphaAnim:SetFromAlpha(fromAlpha)
+    alphaAnim:SetToAlpha(toAlpha)
+    alphaAnim:SetDuration(duration)
+    alphaAnim:SetStartDelay(0)
+    anim:SetToFinalAlpha(true)
+    anim:Play()
 end
 
-function Conceal:ShowMouseOverElements()
-    local frameAlpha = settingsDB["alpha"];
-    if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
+function Conceal:TickUpdate()
+    local frameAlpha = Conceal:GetConcealAlpha()
+    local contextActive = Conceal:IsContextActive()
 
-    if settingsDB["selfFrame"] then
-        local petExists = UnitExists("pet")
-        if PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() or TargetFrame:IsMouseOver() then 
-            Conceal:FadeIn(PlayerFrame)
-            if petExists then Conceal:FadeIn(PetFrame) end
-            Conceal:FadeIn(TargetFrame)
-        elseif settingsDB["selfFrameConcealDuringCombat"] then 
-            Conceal:FadeOut(PlayerFrame)
-            if petExists then Conceal:FadeOut(PetFrame) end
-            Conceal:FadeOut(TargetFrame)
-        end 
-    end
-
-    if settingsDB["targetFrame"] then 
-        if TargetFrame:IsMouseOver() then 
-            Conceal:FadeIn(TargetFrame)
-        elseif settingsDB["targetFrameConcealDuringCombat"] then 
-            Conceal:FadeOut(TargetFrame)
-        end 
-    end
-
-    if settingsDB["buffFrame"] then
-        if BuffFrame:IsMouseOver() then
-            Conceal:FadeIn(BuffFrame)
+    local function Apply(key, frame, concealDuringContextKey, mouseOverFn)
+        if frame == nil then return end
+        if not settingsDB[key] then
+            -- if element is disabled, keep fully visible
+            if lastDesired[key] ~= 1 then
+                frame:SetAlpha(1)
+                lastDesired[key] = 1
+            end
+            return
         end
+
+        local hovered = false
+        if settingsDB["mouseover"] then
+            if mouseOverFn then
+                hovered = mouseOverFn()
+            else
+                hovered = frame:IsMouseOver()
+            end
+        end
+
+        local desired
+        if hovered then
+            desired = 1
+        elseif contextActive and not (concealDuringContextKey and settingsDB[concealDuringContextKey]) then
+            desired = 1
+        else
+            desired = frameAlpha
+        end
+
+        if lastDesired[key] == desired then
+            return
+        end
+
+        -- animate only on transitions
+        if desired == 1 then
+            Conceal:AnimateToAlpha(frame, 1, settingsDB["animationDuration"] == 0 and 0.01 or settingsDB["animationDuration"])
+        else
+            Conceal:AnimateToAlpha(frame, frameAlpha, settingsDB["fadeOutDuration"] == 0 and 0.01 or settingsDB["fadeOutDuration"])
+        end
+        lastDesired[key] = desired
+    end
+
+    -- Player + Pet (pet gated)
+    Apply("selfFrame", PlayerFrame, "selfFrameConcealDuringCombat")
+    if UnitExists("pet") then
+        Apply("selfFrame", PetFrame, "selfFrameConcealDuringCombat")
+    end
+
+    Apply("targetFrame", TargetFrame, "targetFrameConcealDuringCombat")
+    Apply("focusFrame", FocusFrame, "focusFrameConcealDuringCombat")
+
+    -- Buff/Debuff: preserve your current “always show in context” behavior:
+    -- if you want them to follow the same rule as others, remove this special-case.
+    if settingsDB["buffFrame"] then
+        local desired = (contextActive or (settingsDB["mouseover"] and BuffFrame:IsMouseOver())) and 1 or frameAlpha
+        if lastDesired["buffFrame"] ~= desired then
+            if desired == 1 then Conceal:FadeIn(BuffFrame) else Conceal:FadeOut(BuffFrame) end
+            lastDesired["buffFrame"] = desired
+        end
+    else
+        if lastDesired["buffFrame"] ~= 1 then BuffFrame:SetAlpha(1); lastDesired["buffFrame"] = 1 end
     end
 
     if settingsDB["debuffFrame"] then
-        if DebuffFrame:IsMouseOver() then
-            Conceal:FadeIn(DebuffFrame)
+        local desired = (contextActive or (settingsDB["mouseover"] and DebuffFrame:IsMouseOver())) and 1 or frameAlpha
+        if lastDesired["debuffFrame"] ~= desired then
+            if desired == 1 then Conceal:FadeIn(DebuffFrame) else Conceal:FadeOut(DebuffFrame) end
+            lastDesired["debuffFrame"] = desired
         end
+    else
+        if lastDesired["debuffFrame"] ~= 1 then DebuffFrame:SetAlpha(1); lastDesired["debuffFrame"] = 1 end
     end
 
-    if settingsDB["focusFrame"] then
-        if FocusFrame:IsMouseOver() then
-            Conceal:FadeIn(FocusFrame)
-        end
-    end
+    Apply("actionBar1", ActionBar1, "actionBar1ConcealDuringCombat", Conceal.IsActionBar1MouseOver)
+    Apply("actionBar2", ActionBar2, "actionBar2ConcealDuringCombat")
+    Apply("actionBar3", ActionBar3, "actionBar3ConcealDuringCombat")
+    Apply("actionBar4", ActionBar4, "actionBar4ConcealDuringCombat")
+    Apply("actionBar5", ActionBar5, "actionBar5ConcealDuringCombat")
+    Apply("actionBar6", ActionBar6, "actionBar6ConcealDuringCombat")
+    Apply("actionBar7", ActionBar7, "actionBar7ConcealDuringCombat")
+    Apply("actionBar8", ActionBar8, "actionBar8ConcealDuringCombat")
 
-    -- Action Bar 1
-    local isActionBar1Concealable = settingsDB["actionBar1"]
-    if isActionBar1Concealable then
-        local isMouseOverActionBar1 = false
-        for i=1,12 do
-            if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
-        end
-        if isMouseOverActionBar1 then 
-            Conceal:FadeIn(ActionBar1)
-        elseif settingsDB["actionBar1ConcealDuringCombat"] then
-            Conceal:FadeOut(ActionBar1)
-        end
-    end
+    Apply("petActionBar", PetActionBar, "petActionBarConcealDuringCombat")
+    Apply("stanceBar", StanceBar, "stanceBarConcealDuringCombat")
+    Apply("microBar", MicroMenuContainer, "microBarConcealDuringCombat")
+    Apply("experience", StatusTrackingBarManager, "experienceConcealDuringCombat")
+    Apply("objectiveTracker", ObjectiveTrackerFrame, nil)
 
-    if settingsDB["actionBar2"] then 
-        if ActionBar2:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar2)
-        elseif settingsDB["actionBar2ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar2)
-        end 
-    end 
-    if settingsDB["actionBar3"] then 
-        if ActionBar3:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar3)
-        elseif settingsDB["actionBar3ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar3)
-        end 
-    end
-    if settingsDB["actionBar4"] then 
-        if ActionBar4:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar4)
-        elseif settingsDB["actionBar4ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar4)
-        end 
-    end
-    if settingsDB["actionBar5"] then 
-        if ActionBar5:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar5)
-        elseif settingsDB["actionBar5ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar5)
-        end 
-    end
-    if settingsDB["actionBar6"] then 
-        if ActionBar6:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar6)
-        elseif settingsDB["actionBar6ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar6)
-        end 
-    end
-    if settingsDB["actionBar7"] then 
-        if ActionBar7:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar7)
-        elseif settingsDB["actionBar7ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar7)
-        end 
-    end
-    if settingsDB["actionBar8"] then 
-        if ActionBar8:IsMouseOver() then 
-            Conceal:FadeIn(ActionBar8)
-        elseif settingsDB["actionBar8ConcealDuringCombat"] then 
-            Conceal:FadeOut(ActionBar8)
-        end 
-    end
-    if settingsDB["petActionBar"] then 
-        if PetActionBar:IsMouseOver() then 
-            Conceal:FadeIn(PetActionBar)
-        elseif settingsDB["petActionBarConcealDuringCombat"] then 
-            Conceal:FadeOut(PetActionBar)
-        end 
-    end
-    if settingsDB["stanceBar"] then 
-        if StanceBar:IsMouseOver() then 
-            Conceal:FadeIn(StanceBar)
-        elseif settingsDB["stanceBarConcealDuringCombat"] then 
-            Conceal:FadeOut(StanceBar)
-        end 
-    end
-    if settingsDB["microBar"] then 
-        if MicroMenuContainer:IsMouseOver() then 
-            Conceal:FadeIn(MicroMenuContainer)
-        elseif settingsDB["microBarConcealDuringCombat"] then 
-            Conceal:FadeOut(MicroMenuContainer)
-        end 
-    end
-    if settingsDB["experience"] then 
-        if StatusTrackingBarManager:IsMouseOver() then 
-            Conceal:FadeIn(StatusTrackingBarManager)
-        elseif settingsDB["experienceConcealDuringCombat"] then 
-            Conceal:FadeOut(StatusTrackingBarManager)
-        end 
-    end
-    if settingsDB["objectiveTracker"] then
-        if ObjectiveTrackerFrame:IsMouseOver() then
-            Conceal:FadeIn(ObjectiveTrackerFrame)
-        end
-    end
+    -- cast bar policy remains separate
+    if settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
+    else PlayerCastingBarFrame:RegisterAllEvents() end
 end
 
-function Conceal:HideElements()
-
-    if isInCombat then return end
-
-    local frameAlpha = settingsDB["alpha"];
-    if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
-    
-    -- Player Frame
-    if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() or TargetFrame:IsMouseOver()) then 
-        Conceal:FadeOut(PlayerFrame) 
-        if UnitExists("pet") then Conceal:FadeOut(PetFrame) end
-        Conceal:FadeOut(TargetFrame)
-    end
-
-    if settingsDB["targetFrame"] and not TargetFrame:IsMouseOver() then Conceal:FadeOut(TargetFrame); end
-    if settingsDB["buffFrame"] and not BuffFrame:IsMouseOver() then Conceal:FadeOut(BuffFrame); end
-    if settingsDB["debuffFrame"] and not DebuffFrame:IsMouseOver() then Conceal:FadeOut(DebuffFrame); end
-    if settingsDB["focusFrame"] and not FocusFrame:IsMouseOver() then Conceal:FadeOut(FocusFrame); end
-
-    -- Action Bar 1
-    local isActionBar1Concealable = settingsDB["actionBar1"]
-    local isMouseOverActionBar1 = false
-    for i=1,12 do
-        if _G["ActionButton" ..i]:IsMouseOver() then isMouseOverActionBar1 = true end
-    end
-    if isActionBar1Concealable and not isMouseOverActionBar1 then 
-        Conceal:FadeOut(ActionBar1)
-    end
-
-    if settingsDB["actionBar2"] and not ActionBar2:IsMouseOver() then Conceal:FadeOut(ActionBar2); end
-    if settingsDB["actionBar3"] and not ActionBar3:IsMouseOver() then Conceal:FadeOut(ActionBar3); end
-    if settingsDB["actionBar4"] and not ActionBar4:IsMouseOver() then Conceal:FadeOut(ActionBar4); end
-    if settingsDB["actionBar5"] and not ActionBar5:IsMouseOver() then Conceal:FadeOut(ActionBar5); end
-    if settingsDB["actionBar6"] and not ActionBar6:IsMouseOver() then Conceal:FadeOut(ActionBar6); end
-    if settingsDB["actionBar7"] and not ActionBar7:IsMouseOver() then Conceal:FadeOut(ActionBar7); end
-    if settingsDB["actionBar8"] and not ActionBar8:IsMouseOver() then Conceal:FadeOut(ActionBar8); end
-    if settingsDB["petActionBar"] and not PetActionBar:IsMouseOver() then Conceal:FadeOut(PetActionBar); end
-    if settingsDB["stanceBar"] and not StanceBar:IsMouseOver() then Conceal:FadeOut(StanceBar); end
-    if settingsDB["microBar"] and not MicroMenuContainer:IsMouseOver() then Conceal:FadeOut(MicroMenuContainer); end
-    if settingsDB["experience"] and not StatusTrackingBarManager:IsMouseOver() then Conceal:FadeOut(StatusTrackingBarManager); end
-    if settingsDB["objectiveTracker"] and not ObjectiveTrackerFrame:IsMouseOver() then Conceal:FadeOut(ObjectiveTrackerFrame); end
-end
-
--- Event Handlers
 function Conceal:DidEnterCombat() 
-    Conceal:ShowCombatElements()
     isInCombat = true
 end
 
 function Conceal:DidExitCombat() 
-    Conceal:HideElements()
     isInCombat = false
-end
-
-function Conceal:PLAYER_TARGET_CHANGED(info, value)
-    if UnitExists("target") then 
-        if not (settingsDB["actionTargetMode"]) then 
-            Conceal:ShowCombatElements();
-        end    
-    else
-        Conceal:HideElements()
-    end
 end
 
 function Conceal:PLAYER_ENTER_COMBAT(info, value)
@@ -683,96 +530,93 @@ function Conceal:HideGcdFlash()
 end
 
 function Conceal:ProfileHandler() 
-    Conceal:loadConfig();
-    Conceal:RefreshGUI();
-end
 
-function Conceal:RefreshGUI()
-    local shouldShowCombatElement = false
-    if UnitExists("target") then 
-        shouldShowCombatElement = not settingsDB["actionTargetMode"] 
-    end
-    if Conceal:isHealthBelowThreshold() then shouldShowCombatElement = shouldShowCombatElement or true; end
-    if shouldShowCombatElement then 
-        Conceal:ShowCombatElements();
-    else
-        Conceal:HideElements()
-    end
-    if settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
-    else PlayerCastingBarFrame:RegisterAllEvents()  end
 end
 
 function Conceal:GetStatus(info)
-    Conceal:RefreshGUI()
-    Conceal:loadConfig()
     return settingsDB[info[#info]]
 end
 
 function Conceal:UpdateFramesToAlpha(alpha)
-    if settingsDB["selfFrame"] then 
-        PlayerFrame:SetAlpha(alpha) 
-        PetFrame:SetAlpha(alpha)
-        TargetFrame:SetAlpha(alpha)
-    end
-    if settingsDB["targetFrame"] then TargetFrame:SetAlpha(alpha); end
-    if settingsDB["buffFrame"] then BuffFrame:SetAlpha(alpha); end
-    if settingsDB["debuffFrame"] then DebuffFrame:SetAlpha(alpha); end
-    if settingsDB["focusFrame"] then FocusFrame:SetAlpha(alpha); end
-    if settingsDB["actionBar1"] then ActionBar1:SetAlpha(alpha) end
-    if settingsDB["actionBar2"] then ActionBar2:SetAlpha(alpha); end
-    if settingsDB["actionBar3"] then ActionBar3:SetAlpha(alpha); end
-    if settingsDB["actionBar4"] then ActionBar4:SetAlpha(alpha); end
-    if settingsDB["actionBar5"] then ActionBar5:SetAlpha(alpha); end
-    if settingsDB["actionBar6"] then ActionBar6:SetAlpha(alpha); end
-    if settingsDB["actionBar7"] then ActionBar7:SetAlpha(alpha); end
-    if settingsDB["actionBar8"] then ActionBar8:SetAlpha(alpha); end
-    if settingsDB["petActionBar"] then PetActionBar:SetAlpha(alpha); end
-    if settingsDB["stanceBar"] then StanceBar:SetAlpha(alpha); end
-    if settingsDB["microBar"] then MicroMenuContainer:SetAlpha(alpha); end
-    if settingsDB["objectiveTracker"] then ObjectiveTrackerFrame:SetAlpha(alpha); end
+    wipe(lastDesired)
+    Conceal:TickUpdate()
 end
 
-function Conceal:SetStatus(info) 
-    if settingsDB[info[#info]] then
-        settingsDB[info[#info]] = false
-        if info[#info] == "selfFrame"   then PlayerFrame:SetAlpha(1); PetFrame:SetAlpha(1); settingsDB["selfFrameConcealDuringCombat"] = false end
-        if info[#info] == "targetFrame" then TargetFrame:SetAlpha(1); settingsDB["targetFrameConcealDuringCombat"] = false end
-        if info[#info] == "buffFrame"   then BuffFrame:SetAlpha(1); end
-        if info[#info] == "debuffFrame" then DebuffFrame:SetAlpha(1); end
-        if info[#info] == "focusFrame"  then ActionBar1:SetAlpha(1); settingsDB["focusFrameConcealDuringCombat"] = false; end
-        if info[#info] == "actionBar1"  then ActionBar1:SetAlpha(1); settingsDB["actionBar1ConcealDuringCombat"] = false; end
-        if info[#info] == "actionBar2"  then ActionBar2:SetAlpha(1); settingsDB["actionBar2ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar3"  then ActionBar3:SetAlpha(1); settingsDB["actionBar3ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar4"  then ActionBar4:SetAlpha(1); settingsDB["actionBar4ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar5"  then ActionBar5:SetAlpha(1); settingsDB["actionBar5ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar6"  then ActionBar6:SetAlpha(1); settingsDB["actionBar6ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar7"  then ActionBar7:SetAlpha(1); settingsDB["actionBar7ConcealDuringCombat"] = false end
-        if info[#info] == "actionBar8"  then ActionBar8:SetAlpha(1); settingsDB["actionBar8ConcealDuringCombat"] = false end
-        if info[#info] == "petActionBar" then PetActionBar:SetAlpha(1); settingsDB["petActionBarConcealDuringCombat"] = false end
-        if info[#info] == "stanceBar"   then StanceBar:SetAlpha(1); settingsDB["stanceBarConcealDuringCombat"] = false end
-        if info[#info] == "microBar"    then MicroMenuContainer:SetAlpha(1); settingsDB["microBarConcealDuringCombat"] = false end
-        if info[#info] == "experience"  then StatusTrackingBarManager:SetAlpha(1); settingsDB["experienceConcealDuringCombat"] = false end
-        if info[#info] == "objectiveTracker" then ObjectiveTrackerFrame:SetAlpha(1); settingsDB["objectiveTracker"] = false end
-    else 
-        settingsDB[info[#info]] = true
-        if info[#info] == "selfFrameConcealDuringCombat" then settingsDB["selfFrame"] = true end
-        if info[#info] == "targetFrameConcealDuringCombat" then settingsDB["targetFrame"] = true end
-        if info[#info] == "focusFrameConcealDuringCombat" then settingsDB["focusFrame"] = true end
-        if info[#info] == "actionBar1ConcealDuringCombat" then settingsDB["actionBar1"] = true end
-        if info[#info] == "actionBar2ConcealDuringCombat" then settingsDB["actionBar2"] = true end
-        if info[#info] == "actionBar3ConcealDuringCombat" then settingsDB["actionBar3"] = true end
-        if info[#info] == "actionBar4ConcealDuringCombat" then settingsDB["actionBar4"] = true end
-        if info[#info] == "actionBar5ConcealDuringCombat" then settingsDB["actionBar5"] = true end
-        if info[#info] == "actionBar6ConcealDuringCombat" then settingsDB["actionBar6"] = true end
-        if info[#info] == "actionBar7ConcealDuringCombat" then settingsDB["actionBar7"] = true end
-        if info[#info] == "actionBar8ConcealDuringCombat" then settingsDB["actionBar8"] = true end
-        if info[#info] == "petActionBarConcealDuringCombat" then settingsDB["petActionBar"] = true end
-        if info[#info] == "stanceBarConcealDuringCombat" then settingsDB["stanceBar"] = true end
-        if info[#info] == "microBarConcealDuringCombat" then settingsDB["microBar"] = true end
-        if info[#info] == "experienceConcealDuringCombat" then settingsDB["experience"] = true end
-        Conceal:loadConfig()
+function Conceal:SetStatus(info)
+    local key = info[#info]
+
+    if settingsDB[key] then
+        settingsDB[key] = false
+
+        if key == "selfFrame" then
+            settingsDB["selfFrameConcealDuringCombat"] = false
+        elseif key == "targetFrame" then
+            settingsDB["targetFrameConcealDuringCombat"] = false
+        elseif key == "focusFrame" then
+            settingsDB["focusFrameConcealDuringCombat"] = false
+        elseif key == "actionBar1" then
+            settingsDB["actionBar1ConcealDuringCombat"] = false
+        elseif key == "actionBar2" then
+            settingsDB["actionBar2ConcealDuringCombat"] = false
+        elseif key == "actionBar3" then
+            settingsDB["actionBar3ConcealDuringCombat"] = false
+        elseif key == "actionBar4" then
+            settingsDB["actionBar4ConcealDuringCombat"] = false
+        elseif key == "actionBar5" then
+            settingsDB["actionBar5ConcealDuringCombat"] = false
+        elseif key == "actionBar6" then
+            settingsDB["actionBar6ConcealDuringCombat"] = false
+        elseif key == "actionBar7" then
+            settingsDB["actionBar7ConcealDuringCombat"] = false
+        elseif key == "actionBar8" then
+            settingsDB["actionBar8ConcealDuringCombat"] = false
+        elseif key == "petActionBar" then
+            settingsDB["petActionBarConcealDuringCombat"] = false
+        elseif key == "stanceBar" then
+            settingsDB["stanceBarConcealDuringCombat"] = false
+        elseif key == "microBar" then
+            settingsDB["microBarConcealDuringCombat"] = false
+        elseif key == "experience" then
+            settingsDB["experienceConcealDuringCombat"] = false
+        elseif key == "objectiveTracker" then
+            settingsDB["objectiveTracker"] = false
+        end
+    else
+        settingsDB[key] = true
+
+        if key == "selfFrameConcealDuringCombat" then
+            settingsDB["selfFrame"] = true
+        elseif key == "targetFrameConcealDuringCombat" then
+            settingsDB["targetFrame"] = true
+        elseif key == "focusFrameConcealDuringCombat" then
+            settingsDB["focusFrame"] = true
+        elseif key == "actionBar1ConcealDuringCombat" then
+            settingsDB["actionBar1"] = true
+        elseif key == "actionBar2ConcealDuringCombat" then
+            settingsDB["actionBar2"] = true
+        elseif key == "actionBar3ConcealDuringCombat" then
+            settingsDB["actionBar3"] = true
+        elseif key == "actionBar4ConcealDuringCombat" then
+            settingsDB["actionBar4"] = true
+        elseif key == "actionBar5ConcealDuringCombat" then
+            settingsDB["actionBar5"] = true
+        elseif key == "actionBar6ConcealDuringCombat" then
+            settingsDB["actionBar6"] = true
+        elseif key == "actionBar7ConcealDuringCombat" then
+            settingsDB["actionBar7"] = true
+        elseif key == "actionBar8ConcealDuringCombat" then
+            settingsDB["actionBar8"] = true
+        elseif key == "petActionBarConcealDuringCombat" then
+            settingsDB["petActionBar"] = true
+        elseif key == "stanceBarConcealDuringCombat" then
+            settingsDB["stanceBar"] = true
+        elseif key == "microBarConcealDuringCombat" then
+            settingsDB["microBar"] = true
+        elseif key == "experienceConcealDuringCombat" then
+            settingsDB["experience"] = true
+        end
     end
-    Conceal:RefreshGUI()
+    Conceal:UpdateUI()  
 end
 
 function Conceal:GetSlider(info)
@@ -810,6 +654,5 @@ Conceal:RegisterEvent("PLAYER_ENTER_COMBAT")
 Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT")
 Conceal:RegisterEvent("PLAYER_REGEN_DISABLED")
 Conceal:RegisterEvent("PLAYER_REGEN_ENABLED")
-Conceal:RegisterEvent("PLAYER_TARGET_CHANGED")
 
 Conceal:SetScript("OnEvent", Conceal.OnEvent)
