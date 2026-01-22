@@ -1,0 +1,16 @@
+{
+  "releases": [
+    {
+      "name": "Conceal",
+      "version": "2.1.6",
+      "filename": "conceal-2.1.6.zip",
+      "nolib": true,
+      "metadata": [
+        {
+          "flavor": "mainline",
+          "interface": 120000
+        }
+      ]
+    }
+  ]
+}
