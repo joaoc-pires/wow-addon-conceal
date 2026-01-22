@@ -47,7 +47,7 @@ local defaults = {
 
 local isInCombat = false
 
-ActionBar1 = MainMenuBar
+ActionBar1 = MainActionBar
 ActionBar2 = MultiBarBottomLeft
 ActionBar3 = MultiBarBottomRight
 ActionBar4 = MultiBarRight 
@@ -351,21 +351,22 @@ end
 
 -- Conditionals
 function Conceal:isHealthBelowThreshold()
-    local threshold = settingsDB["health"];
-    if threshold then
-        local hp = UnitHealth("player");
-        local maxHP = UnitHealthMax("player");
+    return false
+    -- local threshold = settingsDB["health"];
+    -- if threshold then
+    --     local hp = UnitHealth("player");
+    --     local maxHP = UnitHealthMax("player");
 
-        -- This check is needed because in 11.0 beta, when loading into a new zone, maxHP returns 0
-        if maxHP == 0 then
-            return false
-        end
+    --     -- This check is needed because in 11.0 beta, when loading into a new zone, maxHP returns 0
+    --     if maxHP == 0 then
+    --         return false
+    --     end
         
-        local pct = (hp / maxHP) * 100;
-        return pct < threshold;
-    else
-        return false;
-    end
+    --     local pct = (hp / maxHP) * 100;
+    --     return pct < threshold;
+    -- else
+    --     return false;
+    -- end
 end
 
 function Conceal:FadeIn(frame, forced)
@@ -385,11 +386,10 @@ function Conceal:FadeIn(frame, forced)
         fadeIn:SetDuration(alphaTimer);
         fadeIn:SetStartDelay(0);
         animation:SetToFinalAlpha(true)    
-              
         animation:Play();
     end
     if forced then 
-        frame:SetAlpha(frameAlpha)
+       frame:SetAlpha(frameAlpha)
     end
 end
 
@@ -404,6 +404,7 @@ function Conceal:FadeOut(frame, forced)
     currentAlpha = tonumber(string.format("%.2f", currentAlpha))
 
     if (currentAlpha == 1) and not forced then 
+        frame:SetAlpha(0)
         local animation = frame:CreateAnimationGroup();
         local fadeIn = animation:CreateAnimation("Alpha");
         fadeIn:SetFromAlpha(1);
@@ -415,7 +416,7 @@ function Conceal:FadeOut(frame, forced)
         animation:Play();
     end
     if forced then 
-        frame:SetAlpha(1)
+       frame:SetAlpha(1)
     end
 end
 
@@ -424,7 +425,9 @@ function Conceal:ShowCombatElements()
 
     if settingsDB["selfFrame"] and not settingsDB["selfFrameConcealDuringCombat"] then 
         Conceal:FadeIn(PlayerFrame)
-        Conceal:FadeIn(PetFrame)
+        if UnitExists("pet") then
+            Conceal:FadeIn(PetFrame)
+        end
     end
     if settingsDB["targetFrame"] and not settingsDB["targetFrameConcealDuringCombat"] then TargetFrame:SetAlpha(1) end
     if settingsDB["focusFrame"] and not settingsDB["focusFrameConcealDuringCombat"] then FocusFrame:SetAlpha(1) end
@@ -454,14 +457,15 @@ function Conceal:ShowMouseOverElements()
     local frameAlpha = settingsDB["alpha"];
     if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
 
-    if settingsDB["selfFrame"] then 
+    if settingsDB["selfFrame"] then
+        local petExists = UnitExists("pet")
         if PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() or TargetFrame:IsMouseOver() then 
             Conceal:FadeIn(PlayerFrame)
-            Conceal:FadeIn(PetFrame)
+            if petExists then Conceal:FadeIn(PetFrame) end
             Conceal:FadeIn(TargetFrame)
         elseif settingsDB["selfFrameConcealDuringCombat"] then 
             Conceal:FadeOut(PlayerFrame)
-            Conceal:FadeOut(PetFrame)
+            if petExists then Conceal:FadeOut(PetFrame) end
             Conceal:FadeOut(TargetFrame)
         end 
     end
@@ -600,7 +604,7 @@ function Conceal:HideElements()
     -- Player Frame
     if settingsDB["selfFrame"] and not (PlayerFrame:IsMouseOver() or PetFrame:IsMouseOver() or TargetFrame:IsMouseOver()) then 
         Conceal:FadeOut(PlayerFrame) 
-        Conceal:FadeOut(PetFrame)
+        if UnitExists("pet") then Conceal:FadeOut(PetFrame) end
         Conceal:FadeOut(TargetFrame)
     end
 
