@@ -102,7 +102,7 @@ function Conceal:CreateSettingsWindow()
 		local name = "Opacity"
         local variable = "conceal_alpha"
 		local variableKey = "alpha"
-		local tooltip = "Conceal Opacity"
+		local tooltip = "Opacity applied to UI elements while they are concealed."
 		local defaultValue = settingsDB["alpha"]
 		local minValue = 0
 		local maxValue = 100
@@ -126,7 +126,7 @@ function Conceal:CreateSettingsWindow()
 		local name = "Fade In Time"
 		local variable = "conceal_animationDuration"
 		local variableKey = "animationDuration"
-		local tooltip = "Controls the animations duration for the fade in"
+		local tooltip = "Duration of the fade animation when an element becomes fully visible."
 		local defaultValue = settingsDB["animationDuration"]
 		local minValue = 0
 		local maxValue = 2
@@ -145,7 +145,7 @@ function Conceal:CreateSettingsWindow()
 		local name = "Fade Out Time"
 		local variable = "conceal_fadeOutDuration"
 		local variableKey = "fadeOutDuration"
-		local tooltip = "Controls the animations duration for the fade out"
+		local tooltip = "Duration of the fade animation when an element returns to its concealed state."
 		local defaultValue = settingsDB[variableKey]
 		local minValue = 0
 		local maxValue = 2
@@ -162,31 +162,31 @@ function Conceal:CreateSettingsWindow()
 	end
 
     -- For Action Target Mode
-    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("actionTargetMode","Action Target Mode","Will only show frames when entering combat", settingsDB["actionTargetMode"], concealOptions)
+    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("actionTargetMode","Action Target Mode","UI elements are considered inactive unless you are in combat. Target presence alone will not reveal concealed elements.", settingsDB["actionTargetMode"], concealOptions)
 
     -- Adds Frames sub Category
 	local framesCategory, framesLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Combat Elements");
 	Settings.RegisterAddOnCategory(framesCategory)
 	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Player Frames", ""));
 	
-    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("selfFrame","Enable Player frame","Conceal Player frame", settingsDB["selfFrame"], framesCategory)
-	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("selfFrameConcealDuringCombat","Hide Player frame in combat","Only shows the player frame when the mouse is hovering", settingsDB["selfFrameConcealDuringCombat"], framesCategory)
+    local selfFrameSetting, selfFrameInitializer = Conceal:SetupSubCategoryCheckbox("selfFrame","Enable Player frame","Allow the player frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.", settingsDB["selfFrame"], framesCategory)
+	local selfFrameCombatSetting, selfFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("selfFrameConcealDuringCombat","Hide Player frame in combat","While in combat, the player frame remains concealed unless hovered with the mouse.", settingsDB["selfFrameConcealDuringCombat"], framesCategory)
 	local function canSetFrameInCombat()
         return settingsDB["selfFrame"]
     end
     selfFrameCombatInitializer:Indent()
     selfFrameCombatInitializer:SetParentInitializer(selfFrameInitializer, canSetFrameInCombat)
 
-    local targetFrameSetting, targetFrameInitializer = Conceal:SetupSubCategoryCheckbox("targetFrame","Enable Target frame","Conceal Target frame", settingsDB["targetFrame"], framesCategory)
-	local targetFrameCombatSetting, targetFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("targetFrameConcealDuringCombat","Hide Target frame in combat","Only shows the target frame when the mouse is hovering", settingsDB["targetFrameConcealDuringCombat"], framesCategory)
+    local targetFrameSetting, targetFrameInitializer = Conceal:SetupSubCategoryCheckbox("targetFrame","Enable Target frame","Allow the target frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.", settingsDB["targetFrame"], framesCategory)
+	local targetFrameCombatSetting, targetFrameCombatInitializer = Conceal:SetupSubCategoryCheckbox("targetFrameConcealDuringCombat","Conceal Target Frame During Combat","While in combat, the target frame remains concealed unless hovered with the mouse.", settingsDB["targetFrameConcealDuringCombat"], framesCategory)
     local function canSetTargetInCombat()
         return settingsDB["targetFrame"]
     end
     targetFrameCombatInitializer:Indent()
     targetFrameCombatInitializer:SetParentInitializer(targetFrameInitializer, canSetTargetInCombat)
     
-    Conceal:SetupSubCategoryCheckbox("buffFrame","Enable Buff List","Conceal Buffs", settingsDB["buffFrame"], framesCategory)
-	Conceal:SetupSubCategoryCheckbox("debuffFrame","Debuff List","Conceal Debuffs", settingsDB["debuffFrame"], framesCategory)
+    Conceal:SetupSubCategoryCheckbox("buffFrame","Enable Buff List","Allow the buff list to fade when inactive. Buffs become fully visible on combat, target activity, or mouseover.", settingsDB["buffFrame"], framesCategory)
+	Conceal:SetupSubCategoryCheckbox("debuffFrame","Enable Debuff List","Allow the debuff list to fade when inactive. Debuffs become fully visible on combat, target activity, or mouseover.", settingsDB["debuffFrame"], framesCategory)
 
     -- Adds Cooldown Manager sub Category
 	local cdManagerCategory, cdManagerLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Cooldown Manager");
@@ -195,15 +195,15 @@ function Conceal:CreateSettingsWindow()
     local bicvSetting, bicvInitializer = Conceal:SetupSubCategoryCheckbox(
         "buffIconCooldownViewer",
         "Buff Icon Cooldown Viewer",
-        "Conceal BuffIconCooldownViewer",
+        "Allow the Buff Icon Cooldown Viewer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
         settingsDB["buffIconCooldownViewer"],
         cdManagerCategory
     )
 
     local bicvCombatSetting, bicvCombatInitializer = Conceal:SetupSubCategoryCheckbox(
         "buffIconCooldownViewerConcealDuringCombat",
-        "Hide Buff Icon Cooldown Viewer in combat",
-        "Only shows BuffIconCooldownViewer when the mouse is hovering",
+        "Conceal Buff Icon Cooldown Viewer During Combat",
+        "While in combat, the Buff Icon Cooldown Viewer remains concealed unless hovered.",
         settingsDB["buffIconCooldownViewerConcealDuringCombat"],
         cdManagerCategory
     )
@@ -218,15 +218,15 @@ function Conceal:CreateSettingsWindow()
     local ecvSetting, ecvInitializer = Conceal:SetupSubCategoryCheckbox(
         "essentialCooldownViewer",
         "Essential Cooldown Viewer",
-        "Conceal EssentialCooldownViewer",
+        "Allow the Essential Cooldown Viewer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
         settingsDB["essentialCooldownViewer"],
         cdManagerCategory
     )
 
     local ecvCombatSetting, ecvCombatInitializer = Conceal:SetupSubCategoryCheckbox(
         "essentialCooldownViewerConcealDuringCombat",
-        "Hide Essential Cooldown Viewer in combat",
-        "Only shows EssentialCooldownViewer when the mouse is hovering",
+        "Conceal Essential Cooldown Viewer During Combat",
+        "While in combat, the Essential Cooldown Viewer remains concealed unless hovered.",
         settingsDB["essentialCooldownViewerConcealDuringCombat"],
         cdManagerCategory
     )
@@ -241,15 +241,15 @@ function Conceal:CreateSettingsWindow()
     local ucvSetting, ucvInitializer = Conceal:SetupSubCategoryCheckbox(
         "utilityCooldownViewer",
         "Utility Cooldown Viewer",
-        "Conceal UtilityCooldownViewer",
+        "Allow the Utility Cooldown Viewer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
         settingsDB["utilityCooldownViewer"],
         cdManagerCategory
     )
 
     local ucvCombatSetting, ucvCombatInitializer = Conceal:SetupSubCategoryCheckbox(
         "utilityCooldownViewerConcealDuringCombat",
-        "Hide Utility Cooldown Viewer in combat",
-        "Only shows UtilityCooldownViewer when the mouse is hovering",
+        "Conceal Utility Cooldown Viewer During Combat",
+        "While in combat, the Utility Cooldown Viewer remains concealed unless hovered.",
         settingsDB["utilityCooldownViewerConcealDuringCombat"],
         cdManagerCategory
     )
@@ -261,8 +261,8 @@ function Conceal:CreateSettingsWindow()
     ucvCombatInitializer:Indent()
     ucvCombatInitializer:SetParentInitializer(ucvInitializer, canSetUCVInCombat)
 
-	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Cast Bar", "Selecting this option will ALWAYS hide your cast bar"));
-	Conceal:SetupSubCategoryCheckbox("castBar","Cast Bar","Completly hides the Cast Bar", 	settingsDB["castBar"], framesCategory)
+	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Cast Bar", "This option disables the cast bar entirely and ignores all conceal rules."));
+	Conceal:SetupSubCategoryCheckbox("castBar","Disable Cast Bar","Completely disables the player cast bar. This is not a fade effect.", 	settingsDB["castBar"], framesCategory)
 
     -- Adds Action Bars sub Category
 	local barsCategory, barLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Action Bars");
