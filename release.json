@@ -4,11 +4,15 @@
       "name": "Conceal",
       "version": "2.1.6",
       "filename": "conceal-2.1.6.zip",
-      "nolib": true,
+      "nolib": false,
       "metadata": [
         {
           "flavor": "mainline",
           "interface": 120000
+        },
+        {
+          "flavor": "mainline",
+          "interface": 120002
         }
       ]
     }
