@@ -1,4 +1,4 @@
-## Interface: 120000
+## Interface: 120000,120001
 ## Title: Conceal |cff00aa002.1.6|r
 ## Author: Keirmot
 ## Notes: Hide the player frame, and action bars when not in use!
