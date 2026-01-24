@@ -48,7 +48,8 @@ local defaults = {
     essentialCooldownViewer = false,
     essentialCooldownViewerConcealDuringCombat = false,
     utilityCooldownViewer = false,
-    utilityCooldownViewerConcealDuringCombat = false
+    utilityCooldownViewerConcealDuringCombat = false,
+    socialButton = false
 }
 
 local isInCombat = false
@@ -63,6 +64,8 @@ local ActionBar5 = MultiBarLeft
 local ActionBar6 = MultiBar5
 local ActionBar7 = MultiBar6
 local ActionBar8 = MultiBar7
+local SocialButton = QuickJoinToastButton
+
 
 function Conceal:UpdateUI()
     wipe(lastDesired)
@@ -188,6 +191,9 @@ function Conceal:CreateSettingsWindow()
     Conceal:SetupSubCategoryCheckbox("buffFrame","Enable Buff List","Allow the buff list to fade when inactive. Buffs become fully visible on combat, target activity, or mouseover.", settingsDB["buffFrame"], framesCategory)
 	Conceal:SetupSubCategoryCheckbox("debuffFrame","Enable Debuff List","Allow the debuff list to fade when inactive. Debuffs become fully visible on combat, target activity, or mouseover.", settingsDB["debuffFrame"], framesCategory)
 
+	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Cast Bar", "This option disables the cast bar entirely and ignores all conceal rules."));
+	Conceal:SetupSubCategoryCheckbox("castBar","Disable Cast Bar","Completely disables the player cast bar. This is not a fade effect.", 	settingsDB["castBar"], framesCategory)
+
     -- Adds Cooldown Manager sub Category
 	local cdManagerCategory, cdManagerLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Cooldown Manager");
 	Settings.RegisterAddOnCategory(cdManagerCategory)
@@ -260,10 +266,7 @@ function Conceal:CreateSettingsWindow()
 
     ucvCombatInitializer:Indent()
     ucvCombatInitializer:SetParentInitializer(ucvInitializer, canSetUCVInCombat)
-
-	framesLayout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Cast Bar", "This option disables the cast bar entirely and ignores all conceal rules."));
-	Conceal:SetupSubCategoryCheckbox("castBar","Disable Cast Bar","Completely disables the player cast bar. This is not a fade effect.", 	settingsDB["castBar"], framesCategory)
-
+    
     -- Adds Action Bars sub Category
 	local barsCategory, barLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Action Bars");
 	Settings.RegisterAddOnCategory(barsCategory)
@@ -371,6 +374,7 @@ function Conceal:CreateSettingsWindow()
     selfFrameCombatInitializer:SetParentInitializer(experienceInitializer, canSetexperienceInCombat)
     
     local objectiveTrackerSetting, objectiveTrackerInitializer = Conceal:SetupSubCategoryCheckbox("objectiveTracker","Enable Objective Tracker","Conceal Objective Tracker", settingsDB["objectiveTracker"], extraCategory)
+    local socialButtonSetting, socialButtonInitializer = Conceal:SetupSubCategoryCheckbox("socialButton","Enable Social Button","Conceal Social Button", settingsDB["socialButton"], extraCategory)
 end
 
 function Conceal:OnInitialize()
@@ -581,6 +585,7 @@ function Conceal:TickUpdate()
     Apply("microBar", MicroMenuContainer, "microBarConcealDuringCombat")
     Apply("experience", StatusTrackingBarManager, "experienceConcealDuringCombat")
     Apply("objectiveTracker", ObjectiveTrackerFrame, nil)
+    Apply("socialButton", SocialButton, nil)
 
     -- cast bar policy remains separate
     if settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
