@@ -393,7 +393,6 @@ function Conceal:OnInitialize()
     end
 
     Conceal:CreateSettingsWindow()
-    Conceal:HideGcdFlash()
     QueueStatusButton:SetParent(UIParent)
     tickerHandle = C_Timer.NewTicker(0.25, function()
         Conceal:TickUpdate()
@@ -614,14 +613,6 @@ end
 
 function Conceal:PLAYER_REGEN_ENABLED(info, value)
     Conceal:DidExitCombat()
-end
---credit https://www.mmo-champion.com/threads/2414999-How-do-I-disable-the-GCD-flash-on-my-bars
-function Conceal:HideGcdFlash() 
-    for i,v in pairs(_G) do
-        if type(v)=="table" and type(v.SetDrawBling)=="function" then
-            v:SetDrawBling(false)
-        end
-    end
 end
 
 function Conceal:GetStatus(info)
