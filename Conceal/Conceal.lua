@@ -59,7 +59,7 @@ local tickerHandle = nil
 local ActionBar1 = MainActionBar
 local ActionBar2 = MultiBarBottomLeft
 local ActionBar3 = MultiBarBottomRight
-local ActionBar4 = MultiBarRight 
+local ActionBar4 = MultiBarRight
 local ActionBar5 = MultiBarLeft
 local ActionBar6 = MultiBar5
 local ActionBar7 = MultiBar6
@@ -396,6 +396,9 @@ function Conceal:OnInitialize()
 
     Conceal:CreateSettingsWindow()
     QueueStatusButton:SetParent(UIParent)
+
+    print("Conceal DEBUG: SpellFlyout global is " .. (SpellFlyout and "available" or "NOT available"))
+
     tickerHandle = C_Timer.NewTicker(0.25, function()
         Conceal:TickUpdate()
     end)
@@ -495,7 +498,7 @@ function Conceal:TickUpdate()
     local frameAlpha = Conceal:GetConcealAlpha()
     local contextActive = Conceal:IsContextActive()
 
-    local function Apply(key, frame, concealDuringContextKey, mouseOverFn)
+    local function Apply(key, frame, concealDuringContextKey, mouseOverFn, checkFlyoutOverlap)
         if frame == nil then return end
         if not settingsDB[key] then
             -- if element is disabled, keep fully visible
@@ -512,6 +515,10 @@ function Conceal:TickUpdate()
                 hovered = mouseOverFn()
             else
                 hovered = frame:IsMouseOver()
+            end
+            if not hovered and checkFlyoutOverlap and SpellFlyout and SpellFlyout:IsShown() then
+                print("Conceal DEBUG: flyout visible, revealing key=" .. key)
+                hovered = true
             end
         end
 
@@ -572,17 +579,17 @@ function Conceal:TickUpdate()
     Apply("essentialCooldownViewer", EssentialCooldownViewer, "essentialCooldownViewerConcealDuringCombat")
     Apply("utilityCooldownViewer", UtilityCooldownViewer, "utilityCooldownViewerConcealDuringCombat")
 
-    Apply("actionBar1", ActionBar1, "actionBar1ConcealDuringCombat", Conceal.IsActionBar1MouseOver)
-    Apply("actionBar2", ActionBar2, "actionBar2ConcealDuringCombat")
-    Apply("actionBar3", ActionBar3, "actionBar3ConcealDuringCombat")
-    Apply("actionBar4", ActionBar4, "actionBar4ConcealDuringCombat")
-    Apply("actionBar5", ActionBar5, "actionBar5ConcealDuringCombat")
-    Apply("actionBar6", ActionBar6, "actionBar6ConcealDuringCombat")
-    Apply("actionBar7", ActionBar7, "actionBar7ConcealDuringCombat")
-    Apply("actionBar8", ActionBar8, "actionBar8ConcealDuringCombat")
+    Apply("actionBar1", ActionBar1, "actionBar1ConcealDuringCombat", Conceal.IsActionBar1MouseOver, true)
+    Apply("actionBar2", ActionBar2, "actionBar2ConcealDuringCombat", nil, true)
+    Apply("actionBar3", ActionBar3, "actionBar3ConcealDuringCombat", nil, true)
+    Apply("actionBar4", ActionBar4, "actionBar4ConcealDuringCombat", nil, true)
+    Apply("actionBar5", ActionBar5, "actionBar5ConcealDuringCombat", nil, true)
+    Apply("actionBar6", ActionBar6, "actionBar6ConcealDuringCombat", nil, true)
+    Apply("actionBar7", ActionBar7, "actionBar7ConcealDuringCombat", nil, true)
+    Apply("actionBar8", ActionBar8, "actionBar8ConcealDuringCombat", nil, true)
 
-    Apply("petActionBar", PetActionBar, "petActionBarConcealDuringCombat")
-    Apply("stanceBar", StanceBar, "stanceBarConcealDuringCombat")
+    Apply("petActionBar", PetActionBar, "petActionBarConcealDuringCombat", nil, true)
+    Apply("stanceBar", StanceBar, "stanceBarConcealDuringCombat", nil, true)
     Apply("microBar", MicroMenuContainer, "microBarConcealDuringCombat")
     Apply("experience", StatusTrackingBarManager, "experienceConcealDuringCombat")
     Apply("objectiveTracker", ObjectiveTrackerFrame, nil)
