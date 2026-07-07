@@ -396,9 +396,6 @@ function Conceal:OnInitialize()
 
     Conceal:CreateSettingsWindow()
     QueueStatusButton:SetParent(UIParent)
-
-    print("Conceal DEBUG: SpellFlyout global is " .. (SpellFlyout and "available" or "NOT available"))
-
     tickerHandle = C_Timer.NewTicker(0.25, function()
         Conceal:TickUpdate()
     end)
@@ -498,7 +495,7 @@ function Conceal:TickUpdate()
     local frameAlpha = Conceal:GetConcealAlpha()
     local contextActive = Conceal:IsContextActive()
 
-    local function Apply(key, frame, concealDuringContextKey, mouseOverFn, checkFlyoutOverlap)
+    local function Apply(key, frame, concealDuringContextKey, mouseOverFn, revealOnFlyout)
         if frame == nil then return end
         if not settingsDB[key] then
             -- if element is disabled, keep fully visible
@@ -516,8 +513,10 @@ function Conceal:TickUpdate()
             else
                 hovered = frame:IsMouseOver()
             end
-            if not hovered and checkFlyoutOverlap and SpellFlyout and SpellFlyout:IsShown() then
-                print("Conceal DEBUG: flyout visible, revealing key=" .. key)
+            -- A spell flyout (e.g. a teleport/portal list) can't be reliably attributed to the
+            -- specific bar that opened it, so any bar/action-adjacent element opted in here
+            -- stays visible while any flyout is open.
+            if not hovered and revealOnFlyout and SpellFlyout and SpellFlyout:IsShown() then
                 hovered = true
             end
         end
