@@ -392,6 +392,8 @@ function Conceal:OnInitialize()
         end
     end
 
+    isInCombat = UnitAffectingCombat("player")
+
     Conceal:CreateSettingsWindow()
     QueueStatusButton:SetParent(UIParent)
     tickerHandle = C_Timer.NewTicker(0.25, function()
