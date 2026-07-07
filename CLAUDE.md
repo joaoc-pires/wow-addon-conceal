@@ -15,3 +15,7 @@ No implementation without explicit instruction. The only trigger for writing or 
 Explaining a plan and then executing it in the same turn is not allowed. Present the plan, then stop and wait.
 
 When in doubt, answer and wait.
+
+## Commits
+
+Never add a `Co-Authored-By: Claude` (or any other AI attribution) trailer to commit messages. This applies to every commit, in this project and all others.

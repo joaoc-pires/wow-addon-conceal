@@ -1,20 +1,20 @@
 {
-  "releases": [
-    {
-      "name": "Conceal",
-      "version": "2.4.1",
-      "filename": "conceal-2.4.1.zip",
-      "nolib": false,
-      "metadata": [
-        {
-          "flavor": "mainline",
-          "interface": 120000
-        },
-        {
-          "flavor": "mainline",
-          "interface": 120001
-        }
-      ]
-    }
-  ]
+    "releases":  [
+                     {
+                         "name":  "Conceal",
+                         "version":  "2.4.1",
+                         "filename":  "Conceal-2.4.1.zip",
+                         "nolib":  false,
+                         "metadata":  [
+                                          {
+                                              "flavor":  "mainline",
+                                              "interface":  120000
+                                          },
+                                          {
+                                              "flavor":  "mainline",
+                                              "interface":  120001
+                                          }
+                                      ]
+                     }
+                 ]
 }
