@@ -455,7 +455,11 @@ function Conceal:GetConcealAlpha()
 end
 
 function Conceal:IsContextActive()
-    if isInCombat then return true end
+    -- Read combat state live each tick rather than trusting the cached isInCombat
+    -- flag, which only updates on combat-transition events. On a reconnect mid-fight
+    -- no transition fires and the server sends combat state slightly after login, so
+    -- a live read here self-heals within one tick once that state arrives.
+    if InCombatLockdown() or UnitAffectingCombat("player") then return true end
     if UnitExists("target") and not settingsDB["actionTargetMode"] then return true end
     return false
 end
@@ -623,6 +627,14 @@ function Conceal:PLAYER_REGEN_ENABLED(info, value)
     Conceal:DidExitCombat()
 end
 
+function Conceal:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
+    -- On a full login or reconnect, ADDON_LOADED fires before the player's combat
+    -- flag is ready, so the isInCombat read in OnInitialize can be stale. Re-sync
+    -- here (world is ready) so frames don't stay concealed when reconnecting mid-fight.
+    isInCombat = InCombatLockdown() or UnitAffectingCombat("player")
+    Conceal:UpdateUI()
+end
+
 function Conceal:GetStatus(info)
     return settingsDB[info[#info]]
 end
@@ -756,5 +768,6 @@ Conceal:RegisterEvent("PLAYER_ENTER_COMBAT")
 Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT")
 Conceal:RegisterEvent("PLAYER_REGEN_DISABLED")
 Conceal:RegisterEvent("PLAYER_REGEN_ENABLED")
+Conceal:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 Conceal:SetScript("OnEvent", Conceal.OnEvent)
