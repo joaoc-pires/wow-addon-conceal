@@ -49,7 +49,11 @@ local defaults = {
     essentialCooldownViewerConcealDuringCombat = false,
     utilityCooldownViewer = false,
     utilityCooldownViewerConcealDuringCombat = false,
-    socialButton = false
+    socialButton = false,
+    minimapCluster = false,
+    minimapClusterConcealDuringCombat = false,
+    bagsBar = false,
+    bagsBarConcealDuringCombat = false
 }
 
 local isInCombat = false
@@ -373,6 +377,22 @@ function Conceal:CreateSettingsWindow()
     selfFrameCombatInitializer:Indent()
     selfFrameCombatInitializer:SetParentInitializer(experienceInitializer, canSetexperienceInCombat)
     
+    local minimapClusterSetting, minimapClusterInitializer = Conceal:SetupSubCategoryCheckbox("minimapCluster","Enable Minimap","Conceal the Minimap", settingsDB["minimapCluster"], extraCategory)
+	local minimapClusterCombatSetting, minimapClusterCombatInitializer = Conceal:SetupSubCategoryCheckbox("minimapClusterConcealDuringCombat","Hide Minimap in combat","Only shows the minimap when the mouse is hovering", settingsDB["minimapClusterConcealDuringCombat"], extraCategory)
+	local function canSetminimapClusterInCombat()
+        return settingsDB["minimapCluster"]
+    end
+    minimapClusterCombatInitializer:Indent()
+    minimapClusterCombatInitializer:SetParentInitializer(minimapClusterInitializer, canSetminimapClusterInCombat)
+
+    local bagsBarSetting, bagsBarInitializer = Conceal:SetupSubCategoryCheckbox("bagsBar","Enable Bags Bar","Conceal the Bags Bar", settingsDB["bagsBar"], extraCategory)
+	local bagsBarCombatSetting, bagsBarCombatInitializer = Conceal:SetupSubCategoryCheckbox("bagsBarConcealDuringCombat","Hide Bags Bar in combat","Only shows the bags bar when the mouse is hovering", settingsDB["bagsBarConcealDuringCombat"], extraCategory)
+	local function canSetbagsBarInCombat()
+        return settingsDB["bagsBar"]
+    end
+    bagsBarCombatInitializer:Indent()
+    bagsBarCombatInitializer:SetParentInitializer(bagsBarInitializer, canSetbagsBarInCombat)
+
     local objectiveTrackerSetting, objectiveTrackerInitializer = Conceal:SetupSubCategoryCheckbox("objectiveTracker","Enable Objective Tracker","Conceal Objective Tracker", settingsDB["objectiveTracker"], extraCategory)
     local socialButtonSetting, socialButtonInitializer = Conceal:SetupSubCategoryCheckbox("socialButton","Enable Social Button","Conceal Social Button", settingsDB["socialButton"], extraCategory)
 end
@@ -477,11 +497,14 @@ end
 -- Actions
 -- Event Handlers
 
-function Conceal:AnimateToAlpha(frame, toAlpha, duration)
+function Conceal:AnimateToAlpha(frame, toAlpha, duration, onFinished)
     if frame == nil then return end
     local fromAlpha = frame:GetAlpha()
 
     if tonumber(string.format("%.2f", fromAlpha)) == tonumber(string.format("%.2f", toAlpha)) then
+        -- Already at the target; still run the completion hook so callers relying
+        -- on it (e.g. MinimapCluster's Hide-at-zero) aren't skipped.
+        if onFinished then onFinished() end
         return
     end
 
@@ -492,6 +515,9 @@ function Conceal:AnimateToAlpha(frame, toAlpha, duration)
     alphaAnim:SetDuration(duration)
     alphaAnim:SetStartDelay(0)
     anim:SetToFinalAlpha(true)
+    if onFinished then
+        anim:SetScript("OnFinished", function() onFinished() end)
+    end
     anim:Play()
 end
 
@@ -597,6 +623,52 @@ function Conceal:TickUpdate()
     Apply("experience", StatusTrackingBarManager, "experienceConcealDuringCombat")
     Apply("objectiveTracker", ObjectiveTrackerFrame, nil)
     Apply("socialButton", SocialButton, nil)
+    Apply("bagsBar", BagsBar, "bagsBarConcealDuringCombat")
+
+    -- MinimapCluster is special: some of its pieces are only hidden by Hide(), not
+    -- by alpha. So we always Show() before a transition (to fade in visibly), and
+    -- only Hide() at the *end* of a fade whose concealed alpha is exactly 0.
+    if MinimapCluster then
+        if not settingsDB["minimapCluster"] then
+            if lastDesired["minimapCluster"] ~= 1 then
+                MinimapCluster:Show()
+                MinimapCluster:SetAlpha(1)
+                lastDesired["minimapCluster"] = 1
+            end
+        else
+            local hovered = settingsDB["mouseover"] and MinimapCluster:IsMouseOver()
+
+            local desired
+            if hovered then
+                desired = 1
+            elseif contextActive and not settingsDB["minimapClusterConcealDuringCombat"] then
+                desired = 1
+            else
+                desired = frameAlpha
+            end
+
+            if lastDesired["minimapCluster"] ~= desired then
+                -- Make the frame visible for the transition; Hide() is deferred to the
+                -- fade-to-0 completion below.
+                MinimapCluster:Show()
+                lastDesired["minimapCluster"] = desired
+
+                if desired == 1 then
+                    Conceal:AnimateToAlpha(MinimapCluster, 1, settingsDB["animationDuration"] == 0 and 0.01 or settingsDB["animationDuration"])
+                elseif frameAlpha == 0 then
+                    Conceal:AnimateToAlpha(MinimapCluster, 0, settingsDB["fadeOutDuration"] == 0 and 0.01 or settingsDB["fadeOutDuration"], function()
+                        -- Guard against a stale fade-out finishing after a newer fade-in:
+                        -- only hide if the current intent is still fully concealed.
+                        if lastDesired["minimapCluster"] == 0 then
+                            MinimapCluster:Hide()
+                        end
+                    end)
+                else
+                    Conceal:AnimateToAlpha(MinimapCluster, frameAlpha, settingsDB["fadeOutDuration"] == 0 and 0.01 or settingsDB["fadeOutDuration"])
+                end
+            end
+        end
+    end
 
     -- cast bar policy remains separate
     if settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
