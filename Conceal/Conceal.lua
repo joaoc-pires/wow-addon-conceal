@@ -707,115 +707,9 @@ function Conceal:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     Conceal:UpdateUI()
 end
 
-function Conceal:GetStatus(info)
-    return settingsDB[info[#info]]
-end
-
 function Conceal:UpdateFramesToAlpha(alpha)
     wipe(lastDesired)
     Conceal:TickUpdate()
-end
-
-function Conceal:SetStatus(info)
-    local key = info[#info]
-
-    if settingsDB[key] then
-        settingsDB[key] = false
-
-        if key == "selfFrame" then
-            settingsDB["selfFrameConcealDuringCombat"] = false
-        elseif key == "targetFrame" then
-            settingsDB["targetFrameConcealDuringCombat"] = false
-        elseif key == "focusFrame" then
-            settingsDB["focusFrameConcealDuringCombat"] = false
-        elseif key == "actionBar1" then
-            settingsDB["actionBar1ConcealDuringCombat"] = false
-        elseif key == "actionBar2" then
-            settingsDB["actionBar2ConcealDuringCombat"] = false
-        elseif key == "actionBar3" then
-            settingsDB["actionBar3ConcealDuringCombat"] = false
-        elseif key == "actionBar4" then
-            settingsDB["actionBar4ConcealDuringCombat"] = false
-        elseif key == "actionBar5" then
-            settingsDB["actionBar5ConcealDuringCombat"] = false
-        elseif key == "actionBar6" then
-            settingsDB["actionBar6ConcealDuringCombat"] = false
-        elseif key == "actionBar7" then
-            settingsDB["actionBar7ConcealDuringCombat"] = false
-        elseif key == "actionBar8" then
-            settingsDB["actionBar8ConcealDuringCombat"] = false
-        elseif key == "petActionBar" then
-            settingsDB["petActionBarConcealDuringCombat"] = false
-        elseif key == "stanceBar" then
-            settingsDB["stanceBarConcealDuringCombat"] = false
-        elseif key == "microBar" then
-            settingsDB["microBarConcealDuringCombat"] = false
-        elseif key == "experience" then
-            settingsDB["experienceConcealDuringCombat"] = false
-        elseif key == "objectiveTracker" then
-            settingsDB["objectiveTracker"] = false
-        elseif key == "buffIconCooldownViewer" then
-            settingsDB["buffIconCooldownViewerConcealDuringCombat"] = false
-        elseif key == "essentialCooldownViewer" then
-            settingsDB["essentialCooldownViewerConcealDuringCombat"] = false
-        elseif key == "utilityCooldownViewer" then
-            settingsDB["utilityCooldownViewerConcealDuringCombat"] = false
-        end
-    else
-        settingsDB[key] = true
-
-        if key == "selfFrameConcealDuringCombat" then
-            settingsDB["selfFrame"] = true
-        elseif key == "targetFrameConcealDuringCombat" then
-            settingsDB["targetFrame"] = true
-        elseif key == "focusFrameConcealDuringCombat" then
-            settingsDB["focusFrame"] = true
-        elseif key == "actionBar1ConcealDuringCombat" then
-            settingsDB["actionBar1"] = true
-        elseif key == "actionBar2ConcealDuringCombat" then
-            settingsDB["actionBar2"] = true
-        elseif key == "actionBar3ConcealDuringCombat" then
-            settingsDB["actionBar3"] = true
-        elseif key == "actionBar4ConcealDuringCombat" then
-            settingsDB["actionBar4"] = true
-        elseif key == "actionBar5ConcealDuringCombat" then
-            settingsDB["actionBar5"] = true
-        elseif key == "actionBar6ConcealDuringCombat" then
-            settingsDB["actionBar6"] = true
-        elseif key == "actionBar7ConcealDuringCombat" then
-            settingsDB["actionBar7"] = true
-        elseif key == "actionBar8ConcealDuringCombat" then
-            settingsDB["actionBar8"] = true
-        elseif key == "petActionBarConcealDuringCombat" then
-            settingsDB["petActionBar"] = true
-        elseif key == "stanceBarConcealDuringCombat" then
-            settingsDB["stanceBar"] = true
-        elseif key == "microBarConcealDuringCombat" then
-            settingsDB["microBar"] = true
-        elseif key == "experienceConcealDuringCombat" then
-            settingsDB["experience"] = true
-        elseif key == "buffIconCooldownViewerConcealDuringCombat" then
-            settingsDB["buffIconCooldownViewer"] = true
-        elseif key == "essentialCooldownViewerConcealDuringCombat" then
-            settingsDB["essentialCooldownViewer"] = true
-        elseif key == "utilityCooldownViewerConcealDuringCombat" then
-            settingsDB["utilityCooldownViewer"] = true
-        end
-    end
-    Conceal:UpdateUI()  
-end
-
-function Conceal:GetSlider(info)
-    return settingsDB[info[#info]]
-end
-
-function Conceal:SetSlider(info, value)
-    settingsDB[info[#info]] = value
-    if info[#info] == "alpha" then 
-        local frameAlpha = value;
-        if frameAlpha > 1 then frameAlpha = frameAlpha / 100; end
-        Conceal:UpdateFramesToAlpha(frameAlpha)
-    end
 end
 
 function Conceal:OnEvent(event, ...)
@@ -828,14 +722,7 @@ function Conceal:ADDON_LOADED(event, addOnName)
     end
 end
 
-function Conceal:PLAYER_LOGOUT(event, addOnName)
-	if event == "PLAYER_LOGOUT" and (addOnName == "Conceal") then
-        ConcealDataBase = settingsDB
-    end
-end
-
 Conceal:RegisterEvent("ADDON_LOADED")
-Conceal:RegisterEvent("PLAYER_LOGOUT")
 Conceal:RegisterEvent("PLAYER_ENTER_COMBAT")
 Conceal:RegisterEvent("PLAYER_LEAVE_COMBAT")
 Conceal:RegisterEvent("PLAYER_REGEN_DISABLED")
