@@ -7,4 +7,7 @@
 
 ## SavedVariables: ConcealDataBase
 
-Conceal.lua
+Core.lua
+Config.lua
+Fade.lua
+Options.lua

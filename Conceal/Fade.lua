@@ -1,80 +1,7 @@
-local Conceal = CreateFrame("Frame")
-local settingsDB = {}
-local defaults = {
-    interactive = true,
-    health = 100,
-    power = false,
-    mouseover = true,
-    alpha = 30,
-    animationDuration = 0.25,
-    fadeOutDuration = 0.25,
-    buffFrame = false,
-    debuffFrame = false,
-    actionBar1 = true,
-    actionBar1ConcealDuringCombat = false,
-    actionBar2 = true,
-    actionBar2ConcealDuringCombat = false,
-    actionBar3 = true,
-    actionBar3ConcealDuringCombat = false,
-    actionBar4 = true,
-    actionBar4ConcealDuringCombat = false,
-    actionBar5 = true,
-    actionBar5ConcealDuringCombat = false,
-    actionBar6 = true,
-    actionBar6ConcealDuringCombat = false,
-    actionBar7 = true,
-    actionBar7ConcealDuringCombat = false,
-    actionBar8 = true,
-    actionBar8ConcealDuringCombat = false,
-    petActionBar = true,
-    petActionBarConcealDuringCombat = false,
-    stanceBar = true,
-    stanceBarConcealDuringCombat = false,
-    selfFrame = true,
-    selfFrameConcealDuringCombat = false,
-    targetFrame = false,
-    targetFrameConcealDuringCombat = false,
-    microBar = false,
-    microBarConcealDuringCombat = false,
-    experience = false,
-    experienceConcealDuringCombat = false,
-    focusFrame = false,
-    focusFrameConcealDuringCombat = false,
-    castBar = false,
-    objectiveTracker = false,
-    actionTargetMode = false,
-    buffIconCooldownViewer = false,
-    buffIconCooldownViewerConcealDuringCombat = false,
-    essentialCooldownViewer = false,
-    essentialCooldownViewerConcealDuringCombat = false,
-    utilityCooldownViewer = false,
-    utilityCooldownViewerConcealDuringCombat = false,
-    socialButton = false,
-    minimapCluster = false,
-    minimapClusterConcealDuringCombat = false,
-    bagsBar = false,
-    bagsBarConcealDuringCombat = false
-}
+-- Conceal: fade conditionals, the shared element descriptor, and the tick loop.
 
 local lastDesired = {}   -- key -> last alpha applied (number, normalized 0..1)
-local tickerHandle = nil
 local animCache = {}     -- frame -> { group, anim }, reused across fades to cut GC churn
-
--- Shared element descriptors: single source of truth for both the settings UI
--- (CreateSettingsWindow) and the per-tick alpha updates (TickUpdate). Assigned
--- below, once IsActionBar1MouseOver exists to be referenced.
--- Fields:
---   key            setting key (the enable checkbox)
---   name, tooltip  checkbox label + tooltip (omit when settings == false)
---   combat         { key, name, tooltip } => indented "in combat" child + gating
---   cat            settings group: "main" | "frames" | "cooldown" | "bars" | "extra"
---   header         { title, subtitle } section header emitted before this item
---   frame          global NAME resolved lazily via _G each tick for the standard Apply
---   mouseOverFn    custom mouseover predicate (defaults to frame:IsMouseOver())
---   revealOnFlyout stay visible while a spell flyout is open
---   settings       false => skip the settings loop (applied but not user-configurable)
---   special        true  => skip the standard Apply loop (hand-written in TickUpdate)
-local elements
 
 -- Force a duration away from exactly 0: a 0s animation never fires OnFinished,
 -- so callers relying on the completion hook (e.g. MinimapCluster's Hide-at-zero)
@@ -89,156 +16,6 @@ function Conceal:UpdateUI()
     Conceal:TickUpdate()
 end
 
-function Conceal:SetupSubCategoryCheckbox(key, name, tooltip, defaultValue, category)
-    local setting = Settings.RegisterAddOnSetting(
-        category,
-        "conceal_" .. key,
-        key,
-        settingsDB,
-        type(defaultValue),
-        name,
-        defaultValue)
-
-    local initializer = Settings.CreateCheckbox(category, setting, tooltip)
-
-    setting:SetValueChangedCallback(function()
-        -- settingsDB[key] is already updated by the Settings system
-        Conceal:UpdateUI()
-    end)
-
-    return setting, initializer
-end
-
-function Conceal:CreateSettingsWindow()
-    -- This is an implementation detail for 2.1 when support for Action Target Mode was added
-    if not (settingsDB["actionTargetMode"]) then
-        settingsDB["actionTargetMode"] = false
-    end
-
-    -- Adds the main Category
-    local concealOptions, concealLayout = Settings.RegisterVerticalLayoutCategory("Conceal")
-    concealOptions.ID = "Conceal"
-    Settings.RegisterAddOnCategory(concealOptions)
-
-    -- Sliders stay hand-written: they're not checkboxes and don't fit the descriptor mold.
-    do
-        local name = "Opacity"
-        local variable = "conceal_alpha"
-        local variableKey = "alpha"
-        local tooltip = "Opacity applied to UI elements while they are concealed."
-        local defaultValue = settingsDB["alpha"]
-        local minValue = 0
-        local maxValue = 100
-        local step = 5
-
-        local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
-        setting:SetValueChangedCallback(function(setting, value)
-            -- Store the raw 0..100 value; GetConcealAlpha owns normalization at tick time.
-            settingsDB["alpha"] = value
-            Conceal:UpdateUI()
-        end)
-
-        local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-        Settings.CreateSlider(concealOptions, setting, options, tooltip)
-    end
-    do
-        local name = "Fade In Time"
-        local variable = "conceal_animationDuration"
-        local variableKey = "animationDuration"
-        local tooltip = "Duration of the fade animation when an element becomes fully visible."
-        local defaultValue = settingsDB["animationDuration"]
-        local minValue = 0
-        local maxValue = 2
-        local step = 0.25
-
-        local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
-        setting:SetValueChangedCallback(function(setting, value)
-            settingsDB[setting.variableKey] = value
-        end)
-
-        local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-        Settings.CreateSlider(concealOptions, setting, options, tooltip)
-    end
-    do
-        local name = "Fade Out Time"
-        local variable = "conceal_fadeOutDuration"
-        local variableKey = "fadeOutDuration"
-        local tooltip = "Duration of the fade animation when an element returns to its concealed state."
-        local defaultValue = settingsDB[variableKey]
-        local minValue = 0
-        local maxValue = 2
-        local step = 0.25
-
-        local setting = Settings.RegisterAddOnSetting(concealOptions, variable, variableKey, settingsDB, type(defaultValue), name, defaultValue)
-        setting:SetValueChangedCallback(function(setting, value)
-            settingsDB[setting.variableKey] = value
-        end)
-
-        local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right);
-        Settings.CreateSlider(concealOptions, setting, options, tooltip)
-    end
-
-    -- Sub-categories, created + registered up front to preserve the panel's order.
-    local framesCategory, framesLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Combat Elements");
-    Settings.RegisterAddOnCategory(framesCategory)
-    local cdManagerCategory, cdManagerLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Cooldown Manager");
-    Settings.RegisterAddOnCategory(cdManagerCategory)
-    local barsCategory, barLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Action Bars");
-    Settings.RegisterAddOnCategory(barsCategory)
-    local extraCategory, extraLayout = Settings.RegisterVerticalLayoutSubcategory(concealOptions, "Extra Elements");
-    Settings.RegisterAddOnCategory(extraCategory)
-
-    local groups = {
-        main     = { category = concealOptions,   layout = concealLayout },
-        frames   = { category = framesCategory,    layout = framesLayout },
-        cooldown = { category = cdManagerCategory, layout = cdManagerLayout },
-        bars     = { category = barsCategory,      layout = barLayout },
-        extra    = { category = extraCategory,     layout = extraLayout },
-    }
-
-    for _, e in ipairs(elements) do
-        if e.settings ~= false then
-            local group = groups[e.cat]
-            if e.header then
-                group.layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(e.header[1], e.header[2] or ""));
-            end
-            local _, parentInitializer = Conceal:SetupSubCategoryCheckbox(e.key, e.name, e.tooltip, settingsDB[e.key], group.category)
-            if e.combat then
-                local _, combatInitializer = Conceal:SetupSubCategoryCheckbox(e.combat.key, e.combat.name, e.combat.tooltip, settingsDB[e.combat.key], group.category)
-                local parentKey = e.key
-                combatInitializer:Indent()
-                combatInitializer:SetParentInitializer(parentInitializer, function() return settingsDB[parentKey] end)
-            end
-        end
-    end
-end
-
-function Conceal:OnInitialize()
-    local savedSettingsDB = ConcealDataBase
-    if not savedSettingsDB then
-        settingsDB = defaults
-        ConcealDataBase = defaults
-    else
-        settingsDB = savedSettingsDB
-        -- Merge new defaults into existing saved variables (upgrade-safe)
-        for k, v in pairs(defaults) do
-            if settingsDB[k] == nil then
-                settingsDB[k] = v
-            end
-        end
-    end
-
-    Conceal:CreateSettingsWindow()
-    QueueStatusButton:SetParent(UIParent)
-    tickerHandle = C_Timer.NewTicker(0.25, function()
-        Conceal:TickUpdate()
-    end)
-    Conceal:TickUpdate()
-end
-
 
 -- Conditionals
 function Conceal:FadeIn(frame, forced)
@@ -249,7 +26,7 @@ function Conceal:FadeIn(frame, forced)
         return
     end
 
-    local duration = nonZeroDuration(settingsDB["animationDuration"])
+    local duration = nonZeroDuration(Conceal.settingsDB["animationDuration"])
 
     -- Optional guard to avoid restarting the same transition
     local currentAlpha = tonumber(string.format("%.2f", frame:GetAlpha()))
@@ -271,7 +48,7 @@ function Conceal:FadeOut(frame, forced)
         return
     end
 
-    local duration = nonZeroDuration(settingsDB["fadeOutDuration"])
+    local duration = nonZeroDuration(Conceal.settingsDB["fadeOutDuration"])
 
     -- If you want to avoid restarting the same transition, keep the guard:
     local currentAlpha = tonumber(string.format("%.2f", frame:GetAlpha()))
@@ -283,7 +60,7 @@ function Conceal:FadeOut(frame, forced)
 end
 
 function Conceal:GetConcealAlpha()
-    local a = settingsDB["alpha"] or 30
+    local a = Conceal.settingsDB["alpha"] or 30
     if a > 1 then a = a / 100 end
     -- Clamp a full 1.0 down to 0.95: a truly opaque "concealed" alpha causes frame drops.
     if a == 1 then a = 0.95 end
@@ -296,7 +73,7 @@ function Conceal:IsContextActive()
     -- combat state slightly after login, so a live read here self-heals within one
     -- tick once that state arrives.
     if InCombatLockdown() or UnitAffectingCombat("player") then return true end
-    if UnitExists("target") and not settingsDB["actionTargetMode"] then return true end
+    if UnitExists("target") and not Conceal.settingsDB["actionTargetMode"] then return true end
     return false
 end
 
@@ -310,10 +87,24 @@ function Conceal:IsActionBar1MouseOver()
     return false
 end
 
--- Descriptor table (see the field notes near the top). Defined here so mouseOverFn
--- references (IsActionBar1MouseOver) already exist; CreateSettingsWindow and
--- TickUpdate close over the `elements` upvalue and only run after full load.
-elements = {
+-- Shared element descriptors: single source of truth for both the settings UI
+-- (CreateSettingsWindow, in Options.lua) and the per-tick alpha updates
+-- (TickUpdate, below).
+-- Fields:
+--   key            setting key (the enable checkbox)
+--   name, tooltip  checkbox label + tooltip (omit when settings == false)
+--   combat         { key, name, tooltip } => indented "in combat" child + gating
+--   cat            settings group: "main" | "frames" | "cooldown" | "bars" | "extra"
+--   header         { title, subtitle } section header emitted before this item
+--   frame          global NAME resolved lazily via _G each tick for the standard Apply
+--   mouseOverFn    custom mouseover predicate (defaults to frame:IsMouseOver())
+--   revealOnFlyout stay visible while a spell flyout is open
+--   settings       false => skip the settings loop (applied but not user-configurable)
+--   special        true  => skip the standard Apply loop (hand-written in TickUpdate)
+--
+-- Defined here (after IsActionBar1MouseOver) so the mouseOverFn reference below
+-- already exists when this table literal is evaluated.
+Conceal.elements = {
     { cat = "main", key = "actionTargetMode",
       name = "Action Target Mode",
       tooltip = "UI elements are considered inactive unless you are in combat. Target presence alone will not reveal concealed elements." },
@@ -474,7 +265,7 @@ function Conceal:TickUpdate()
 
     local function Apply(key, frame, concealDuringContextKey, mouseOverFn, revealOnFlyout)
         if frame == nil then return end
-        if not settingsDB[key] then
+        if not Conceal.settingsDB[key] then
             -- if element is disabled, keep fully visible
             if lastDesired[key] ~= 1 then
                 frame:SetAlpha(1)
@@ -484,7 +275,7 @@ function Conceal:TickUpdate()
         end
 
         local hovered = false
-        if settingsDB["mouseover"] then
+        if Conceal.settingsDB["mouseover"] then
             if mouseOverFn then
                 hovered = mouseOverFn()
             else
@@ -501,7 +292,7 @@ function Conceal:TickUpdate()
         local desired
         if hovered then
             desired = 1
-        elseif contextActive and not (concealDuringContextKey and settingsDB[concealDuringContextKey]) then
+        elseif contextActive and not (concealDuringContextKey and Conceal.settingsDB[concealDuringContextKey]) then
             desired = 1
         else
             desired = frameAlpha
@@ -513,9 +304,9 @@ function Conceal:TickUpdate()
 
         -- animate only on transitions
         if desired == 1 then
-            Conceal:AnimateToAlpha(frame, 1, nonZeroDuration(settingsDB["animationDuration"]))
+            Conceal:AnimateToAlpha(frame, 1, nonZeroDuration(Conceal.settingsDB["animationDuration"]))
         else
-            Conceal:AnimateToAlpha(frame, frameAlpha, nonZeroDuration(settingsDB["fadeOutDuration"]))
+            Conceal:AnimateToAlpha(frame, frameAlpha, nonZeroDuration(Conceal.settingsDB["fadeOutDuration"]))
         end
         lastDesired[key] = desired
     end
@@ -528,7 +319,7 @@ function Conceal:TickUpdate()
     end
 
     -- Standard, data-driven elements (everything not flagged special).
-    for _, e in ipairs(elements) do
+    for _, e in ipairs(Conceal.elements) do
         if e.frame and not e.special then
             Apply(e.key, _G[e.frame], e.combat and e.combat.key, e.mouseOverFn, e.revealOnFlyout)
         end
@@ -536,8 +327,8 @@ function Conceal:TickUpdate()
 
     -- Buff/Debuff: preserve your current “always show in context” behavior:
     -- if you want them to follow the same rule as others, remove this special-case.
-    if settingsDB["buffFrame"] then
-        local desired = (contextActive or (settingsDB["mouseover"] and BuffFrame:IsMouseOver())) and 1 or frameAlpha
+    if Conceal.settingsDB["buffFrame"] then
+        local desired = (contextActive or (Conceal.settingsDB["mouseover"] and BuffFrame:IsMouseOver())) and 1 or frameAlpha
         if lastDesired["buffFrame"] ~= desired then
             if desired == 1 then Conceal:FadeIn(BuffFrame) else Conceal:FadeOut(BuffFrame) end
             lastDesired["buffFrame"] = desired
@@ -546,8 +337,8 @@ function Conceal:TickUpdate()
         if lastDesired["buffFrame"] ~= 1 then BuffFrame:SetAlpha(1); lastDesired["buffFrame"] = 1 end
     end
 
-    if settingsDB["debuffFrame"] then
-        local desired = (contextActive or (settingsDB["mouseover"] and DebuffFrame:IsMouseOver())) and 1 or frameAlpha
+    if Conceal.settingsDB["debuffFrame"] then
+        local desired = (contextActive or (Conceal.settingsDB["mouseover"] and DebuffFrame:IsMouseOver())) and 1 or frameAlpha
         if lastDesired["debuffFrame"] ~= desired then
             if desired == 1 then Conceal:FadeIn(DebuffFrame) else Conceal:FadeOut(DebuffFrame) end
             lastDesired["debuffFrame"] = desired
@@ -560,19 +351,19 @@ function Conceal:TickUpdate()
     -- by alpha. So we always Show() before a transition (to fade in visibly), and
     -- only Hide() at the *end* of a fade whose concealed alpha is exactly 0.
     if MinimapCluster then
-        if not settingsDB["minimapCluster"] then
+        if not Conceal.settingsDB["minimapCluster"] then
             if lastDesired["minimapCluster"] ~= 1 then
                 MinimapCluster:Show()
                 MinimapCluster:SetAlpha(1)
                 lastDesired["minimapCluster"] = 1
             end
         else
-            local hovered = settingsDB["mouseover"] and MinimapCluster:IsMouseOver()
+            local hovered = Conceal.settingsDB["mouseover"] and MinimapCluster:IsMouseOver()
 
             local desired
             if hovered then
                 desired = 1
-            elseif contextActive and not settingsDB["minimapClusterConcealDuringCombat"] then
+            elseif contextActive and not Conceal.settingsDB["minimapClusterConcealDuringCombat"] then
                 desired = 1
             else
                 desired = frameAlpha
@@ -585,9 +376,9 @@ function Conceal:TickUpdate()
                 lastDesired["minimapCluster"] = desired
 
                 if desired == 1 then
-                    Conceal:AnimateToAlpha(MinimapCluster, 1, nonZeroDuration(settingsDB["animationDuration"]))
+                    Conceal:AnimateToAlpha(MinimapCluster, 1, nonZeroDuration(Conceal.settingsDB["animationDuration"]))
                 elseif frameAlpha == 0 then
-                    Conceal:AnimateToAlpha(MinimapCluster, 0, nonZeroDuration(settingsDB["fadeOutDuration"]), function()
+                    Conceal:AnimateToAlpha(MinimapCluster, 0, nonZeroDuration(Conceal.settingsDB["fadeOutDuration"]), function()
                         -- Guard against a stale fade-out finishing after a newer fade-in:
                         -- only hide if the current intent is still fully concealed.
                         if lastDesired["minimapCluster"] == 0 then
@@ -595,35 +386,13 @@ function Conceal:TickUpdate()
                         end
                     end)
                 else
-                    Conceal:AnimateToAlpha(MinimapCluster, frameAlpha, nonZeroDuration(settingsDB["fadeOutDuration"]))
+                    Conceal:AnimateToAlpha(MinimapCluster, frameAlpha, nonZeroDuration(Conceal.settingsDB["fadeOutDuration"]))
                 end
             end
         end
     end
 
     -- cast bar policy remains separate
-    if settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
+    if Conceal.settingsDB["castBar"] then PlayerCastingBarFrame:UnregisterAllEvents()
     else PlayerCastingBarFrame:RegisterAllEvents() end
 end
-
-function Conceal:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
-    -- On a full login or reconnect the world becomes ready here; re-tick so frames
-    -- reflect current combat/target state immediately. IsContextActive reads combat
-    -- live, so no cached flag needs re-syncing.
-    Conceal:UpdateUI()
-end
-
-function Conceal:OnEvent(event, ...)
-	self[event](self, event, ...)
-end
-
-function Conceal:ADDON_LOADED(event, addOnName)
-	if event == "ADDON_LOADED" and (addOnName == "Conceal") then
-        Conceal:OnInitialize()
-    end
-end
-
-Conceal:RegisterEvent("ADDON_LOADED")
-Conceal:RegisterEvent("PLAYER_ENTERING_WORLD")
-
-Conceal:SetScript("OnEvent", Conceal.OnEvent)
