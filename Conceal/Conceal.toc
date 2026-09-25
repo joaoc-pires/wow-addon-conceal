@@ -2,7 +2,7 @@
 ## Title: Conceal |cff00aa002.5.1|r
 ## Author: Keirmot
 ## Notes: Hide the player frame, and action bars when not in use!
-## Version: 2.5.1
+## Version: 2.6.0
 ## IconTexture: Interface\AddOns\Conceal\Assets\ConcealLogo
 ## Category-enUS: User Interface
 
