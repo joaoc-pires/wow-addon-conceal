@@ -111,11 +111,16 @@ Conceal.elements = {
       tooltip = "UI elements are considered inactive unless you are in combat. Target presence alone will not reveal concealed elements." },
 
     -- Player Frames
-    { cat = "frames", header = { "Player Frames", "" }, key = "selfFrame", frame = "PlayerFrame", special = true,
+    { cat = "frames", header = { "Player Frames", "" }, key = "selfFrame", frame = "PlayerFrame",
       name = "Enable Player frame",
       tooltip = "Allow the player frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
       combat = { key = "selfFrameConcealDuringCombat", name = "Hide Player frame in combat",
                  tooltip = "While in combat, the player frame remains concealed unless hovered with the mouse." } },
+    { cat = "frames", key = "petFrame", frame = "PetFrame", special = true,
+      name = "Enable Pet frame",
+      tooltip = "Allow the pet frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "petFrameConcealDuringCombat", name = "Hide Pet frame in combat",
+                 tooltip = "While in combat, the pet frame remains concealed unless hovered with the mouse." } },
     { cat = "frames", key = "targetFrame", frame = "TargetFrame",
       name = "Enable Target frame",
       tooltip = "Allow the target frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
@@ -340,11 +345,9 @@ function Conceal:TickUpdate(instant)
         lastDesired[key] = desired
     end
 
-    -- Player + Pet (pet gated). Both deliberately share the "selfFrame" key/state, so
-    -- they're applied here as an adjacent pair rather than via the descriptor loop.
-    Apply("selfFrame", PlayerFrame, "selfFrameConcealDuringCombat")
+    -- Pet frame is only applied while a pet exists.
     if UnitExists("pet") then
-        Apply("selfFrame", PetFrame, "selfFrameConcealDuringCombat")
+        Apply("petFrame", PetFrame, "petFrameConcealDuringCombat")
     end
 
     -- Standard, data-driven elements (everything not flagged special).
