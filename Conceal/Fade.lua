@@ -100,7 +100,8 @@ end
 --   mouseOverFn    custom mouseover predicate (defaults to frame:IsMouseOver())
 --   revealOnFlyout stay visible while a spell flyout is open
 --   settings       false => skip the settings loop (applied but not user-configurable)
---   special        true  => skip the standard Apply loop (hand-written in TickUpdate)
+--   requiresFrame  true  => only show settings when _G[frame] exists (client-specific frames)
+--   special       true  => skip the standard Apply loop (hand-written in TickUpdate)
 --
 -- Defined here (after IsActionBar1MouseOver) so the mouseOverFn reference below
 -- already exists when this table literal is evaluated.
@@ -133,6 +134,22 @@ Conceal.elements = {
       key = "castBar", special = true,
       name = "Disable Cast Bar",
       tooltip = "Completely disables the player cast bar. This is not a fade effect." },
+    -- Swing Timers only exist on WoW: Forever (Blizzard_SwingTimer); hidden elsewhere via requiresFrame.
+    { cat = "frames", header = { "Swing Timers", "" }, key = "swingTimerMainHand", frame = "SwingTimerMainHandFrame", requiresFrame = true,
+      name = "Enable Main Hand Swing Timer",
+      tooltip = "Allow the main hand swing timer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "swingTimerMainHandConcealDuringCombat", name = "Hide Main Hand Swing Timer in combat",
+                 tooltip = "While in combat, the main hand swing timer remains concealed unless hovered with the mouse." } },
+    { cat = "frames", key = "swingTimerOffHand", frame = "SwingTimerOffHandFrame", requiresFrame = true,
+      name = "Enable Off Hand Swing Timer",
+      tooltip = "Allow the off hand swing timer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "swingTimerOffHandConcealDuringCombat", name = "Hide Off Hand Swing Timer in combat",
+                 tooltip = "While in combat, the off hand swing timer remains concealed unless hovered with the mouse." } },
+    { cat = "frames", key = "swingTimerRanged", frame = "SwingTimerRangedFrame", requiresFrame = true,
+      name = "Enable Ranged Swing Timer",
+      tooltip = "Allow the ranged swing timer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "swingTimerRangedConcealDuringCombat", name = "Hide Ranged Swing Timer in combat",
+                 tooltip = "While in combat, the ranged swing timer remains concealed unless hovered with the mouse." } },
 
     -- Cooldown Manager
     { cat = "cooldown", key = "buffIconCooldownViewer", frame = "BuffIconCooldownViewer",

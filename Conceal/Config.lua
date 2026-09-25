@@ -53,7 +53,13 @@ Conceal.defaults = {
     minimapCluster = false,
     minimapClusterConcealDuringCombat = false,
     bagsBar = false,
-    bagsBarConcealDuringCombat = false
+    bagsBarConcealDuringCombat = false,
+    swingTimerMainHand = false,
+    swingTimerMainHandConcealDuringCombat = false,
+    swingTimerOffHand = false,
+    swingTimerOffHandConcealDuringCombat = false,
+    swingTimerRanged = false,
+    swingTimerRangedConcealDuringCombat = false
 }
 
 -- Load persisted settings, seeding first-run defaults and merging any newly
