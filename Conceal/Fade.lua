@@ -259,7 +259,17 @@ function Conceal:AnimateToAlpha(frame, toAlpha, duration, onFinished)
     group:Play()
 end
 
-function Conceal:TickUpdate()
+-- Jump straight to an alpha with no fade, stopping any in-flight animation first so
+-- it can't keep running and override the value.
+local function snapToAlpha(frame, alpha)
+    local cached = animCache[frame]
+    if cached then cached.group:Stop() end
+    frame:SetAlpha(alpha)
+end
+
+-- instant: apply transitions with SetAlpha instead of animating. Used while dragging
+-- the Opacity slider, where restarting a fade on every step tanks the frame rate.
+function Conceal:TickUpdate(instant)
     local frameAlpha = Conceal:GetConcealAlpha()
     local contextActive = Conceal:IsContextActive()
 
@@ -303,7 +313,9 @@ function Conceal:TickUpdate()
         end
 
         -- animate only on transitions
-        if desired == 1 then
+        if instant then
+            snapToAlpha(frame, desired)
+        elseif desired == 1 then
             Conceal:AnimateToAlpha(frame, 1, nonZeroDuration(Conceal.settingsDB["animationDuration"]))
         else
             Conceal:AnimateToAlpha(frame, frameAlpha, nonZeroDuration(Conceal.settingsDB["fadeOutDuration"]))
@@ -330,7 +342,8 @@ function Conceal:TickUpdate()
     if Conceal.settingsDB["buffFrame"] then
         local desired = (contextActive or (Conceal.settingsDB["mouseover"] and BuffFrame:IsMouseOver())) and 1 or frameAlpha
         if lastDesired["buffFrame"] ~= desired then
-            if desired == 1 then Conceal:FadeIn(BuffFrame) else Conceal:FadeOut(BuffFrame) end
+            if instant then snapToAlpha(BuffFrame, desired)
+            elseif desired == 1 then Conceal:FadeIn(BuffFrame) else Conceal:FadeOut(BuffFrame) end
             lastDesired["buffFrame"] = desired
         end
     else
@@ -340,7 +353,8 @@ function Conceal:TickUpdate()
     if Conceal.settingsDB["debuffFrame"] then
         local desired = (contextActive or (Conceal.settingsDB["mouseover"] and DebuffFrame:IsMouseOver())) and 1 or frameAlpha
         if lastDesired["debuffFrame"] ~= desired then
-            if desired == 1 then Conceal:FadeIn(DebuffFrame) else Conceal:FadeOut(DebuffFrame) end
+            if instant then snapToAlpha(DebuffFrame, desired)
+            elseif desired == 1 then Conceal:FadeIn(DebuffFrame) else Conceal:FadeOut(DebuffFrame) end
             lastDesired["debuffFrame"] = desired
         end
     else
@@ -375,7 +389,11 @@ function Conceal:TickUpdate()
                 MinimapCluster:Show()
                 lastDesired["minimapCluster"] = desired
 
-                if desired == 1 then
+                if instant then
+                    -- No fade to complete, so hide right away instead of on OnFinished.
+                    snapToAlpha(MinimapCluster, desired)
+                    if desired == 0 then MinimapCluster:Hide() end
+                elseif desired == 1 then
                     Conceal:AnimateToAlpha(MinimapCluster, 1, nonZeroDuration(Conceal.settingsDB["animationDuration"]))
                 elseif frameAlpha == 0 then
                     Conceal:AnimateToAlpha(MinimapCluster, 0, nonZeroDuration(Conceal.settingsDB["fadeOutDuration"]), function()

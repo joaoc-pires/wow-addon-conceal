@@ -46,7 +46,9 @@ function Conceal:CreateSettingsWindow()
         setting:SetValueChangedCallback(function(setting, value)
             -- Store the raw 0..100 value; GetConcealAlpha owns normalization at tick time.
             Conceal.settingsDB["alpha"] = value
-            Conceal:UpdateUI()
+            -- Don't wipe transition state: only concealed frames hold the old alpha, so
+            -- only they change, and they snap instead of restarting a fade every step.
+            Conceal:TickUpdate(true)
         end)
 
         local options = Settings.CreateSliderOptions(minValue, maxValue, step)
