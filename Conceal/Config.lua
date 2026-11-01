@@ -32,6 +32,8 @@ Conceal.defaults = {
     stanceBarConcealDuringCombat = false,
     selfFrame = true,
     selfFrameConcealDuringCombat = false,
+    petFrame = true,
+    petFrameConcealDuringCombat = false,
     targetFrame = false,
     targetFrameConcealDuringCombat = false,
     microBar = false,
@@ -53,7 +55,13 @@ Conceal.defaults = {
     minimapCluster = false,
     minimapClusterConcealDuringCombat = false,
     bagsBar = false,
-    bagsBarConcealDuringCombat = false
+    bagsBarConcealDuringCombat = false,
+    swingTimerMainHand = false,
+    swingTimerMainHandConcealDuringCombat = false,
+    swingTimerOffHand = false,
+    swingTimerOffHandConcealDuringCombat = false,
+    swingTimerRanged = false,
+    swingTimerRangedConcealDuringCombat = false
 }
 
 -- Load persisted settings, seeding first-run defaults and merging any newly

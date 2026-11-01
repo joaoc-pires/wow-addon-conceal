@@ -100,7 +100,8 @@ end
 --   mouseOverFn    custom mouseover predicate (defaults to frame:IsMouseOver())
 --   revealOnFlyout stay visible while a spell flyout is open
 --   settings       false => skip the settings loop (applied but not user-configurable)
---   special        true  => skip the standard Apply loop (hand-written in TickUpdate)
+--   requiresFrame  true  => only show settings when _G[frame] exists (client-specific frames)
+--   special       true  => skip the standard Apply loop (hand-written in TickUpdate)
 --
 -- Defined here (after IsActionBar1MouseOver) so the mouseOverFn reference below
 -- already exists when this table literal is evaluated.
@@ -110,11 +111,16 @@ Conceal.elements = {
       tooltip = "UI elements are considered inactive unless you are in combat. Target presence alone will not reveal concealed elements." },
 
     -- Player Frames
-    { cat = "frames", header = { "Player Frames", "" }, key = "selfFrame", frame = "PlayerFrame", special = true,
+    { cat = "frames", header = { "Player Frames", "" }, key = "selfFrame", frame = "PlayerFrame",
       name = "Enable Player frame",
       tooltip = "Allow the player frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
       combat = { key = "selfFrameConcealDuringCombat", name = "Hide Player frame in combat",
                  tooltip = "While in combat, the player frame remains concealed unless hovered with the mouse." } },
+    { cat = "frames", key = "petFrame", frame = "PetFrame", special = true,
+      name = "Enable Pet frame",
+      tooltip = "Allow the pet frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "petFrameConcealDuringCombat", name = "Hide Pet frame in combat",
+                 tooltip = "While in combat, the pet frame remains concealed unless hovered with the mouse." } },
     { cat = "frames", key = "targetFrame", frame = "TargetFrame",
       name = "Enable Target frame",
       tooltip = "Allow the target frame to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
@@ -133,6 +139,22 @@ Conceal.elements = {
       key = "castBar", special = true,
       name = "Disable Cast Bar",
       tooltip = "Completely disables the player cast bar. This is not a fade effect." },
+    -- Swing Timers only exist on WoW: Forever (Blizzard_SwingTimer); hidden elsewhere via requiresFrame.
+    { cat = "frames", header = { "Swing Timers", "" }, key = "swingTimerMainHand", frame = "SwingTimerMainHandFrame", requiresFrame = true,
+      name = "Enable Main Hand Swing Timer",
+      tooltip = "Allow the main hand swing timer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "swingTimerMainHandConcealDuringCombat", name = "Hide Main Hand Swing Timer in combat",
+                 tooltip = "While in combat, the main hand swing timer remains concealed unless hovered with the mouse." } },
+    { cat = "frames", key = "swingTimerOffHand", frame = "SwingTimerOffHandFrame", requiresFrame = true,
+      name = "Enable Off Hand Swing Timer",
+      tooltip = "Allow the off hand swing timer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "swingTimerOffHandConcealDuringCombat", name = "Hide Off Hand Swing Timer in combat",
+                 tooltip = "While in combat, the off hand swing timer remains concealed unless hovered with the mouse." } },
+    { cat = "frames", key = "swingTimerRanged", frame = "SwingTimerRangedFrame", requiresFrame = true,
+      name = "Enable Ranged Swing Timer",
+      tooltip = "Allow the ranged swing timer to fade when inactive. It becomes fully visible on combat, target activity, or mouseover.",
+      combat = { key = "swingTimerRangedConcealDuringCombat", name = "Hide Ranged Swing Timer in combat",
+                 tooltip = "While in combat, the ranged swing timer remains concealed unless hovered with the mouse." } },
 
     -- Cooldown Manager
     { cat = "cooldown", key = "buffIconCooldownViewer", frame = "BuffIconCooldownViewer",
@@ -323,11 +345,9 @@ function Conceal:TickUpdate(instant)
         lastDesired[key] = desired
     end
 
-    -- Player + Pet (pet gated). Both deliberately share the "selfFrame" key/state, so
-    -- they're applied here as an adjacent pair rather than via the descriptor loop.
-    Apply("selfFrame", PlayerFrame, "selfFrameConcealDuringCombat")
+    -- Pet frame is only applied while a pet exists.
     if UnitExists("pet") then
-        Apply("selfFrame", PetFrame, "selfFrameConcealDuringCombat")
+        Apply("petFrame", PetFrame, "petFrameConcealDuringCombat")
     end
 
     -- Standard, data-driven elements (everything not flagged special).

@@ -113,7 +113,7 @@ function Conceal:CreateSettingsWindow()
     }
 
     for _, e in ipairs(Conceal.elements) do
-        if e.settings ~= false then
+        if e.settings ~= false and not (e.requiresFrame and _G[e.frame] == nil) then
             local group = groups[e.cat]
             if e.header then
                 group.layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(e.header[1], e.header[2] or ""));
